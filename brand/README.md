@@ -10,6 +10,7 @@
 | `logo-lockup-dark.jpg`, `logo-lockup-transparent.png` | Mascot + "mochibo" wordmark |
 | `mascot-transparent-1024.png`, `mascot-wave-transparent-1024.png` | Mascot on its own, transparent background |
 | `app-icon-512.png` | App icon (head on the brand gradient) |
+| `mochibo-ad.mp4` | 30 s promo video, 1920x1080, 30 fps, with music. Rendered from the site's own 3D engine. The publish scene shows an example price with a fee note. |
 
 Website copies live in `apps/web/public/brand/` (nav logo) and `apps/web/app/` (favicon, Apple icon, link preview image).
 
