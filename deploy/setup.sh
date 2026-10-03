@@ -48,11 +48,17 @@ if ! "$NODE_DIR/bin/node" -v 2>/dev/null | grep -q "^v$NODE_MAJOR\."; then
     aarch64) ARCH=arm64 ;;
     *) echo "Unsupported CPU: $(uname -m)"; exit 1 ;;
   esac
-  BASE="https://nodejs.org/dist/latest-v${NODE_MAJOR}.x"
-  SUMS="$(curl -fsSL "$BASE/SHASUMS256.txt")"
+  # nodejs.org first; a public mirror with the same layout if this server cannot reach it.
+  SUMS=""
+  for BASE in "https://nodejs.org/dist/latest-v${NODE_MAJOR}.x" "https://npmmirror.com/mirrors/node/latest-v${NODE_MAJOR}.x"; do
+    if SUMS="$(curl -fsSL --retry 4 --retry-delay 3 --retry-all-errors "$BASE/SHASUMS256.txt")"; then break; fi
+    echo "    Could not reach $BASE, trying the next source..."
+    SUMS=""
+  done
+  [ -n "$SUMS" ] || { echo "Could not download Node.js. Check DNS: getent hosts nodejs.org"; exit 1; }
   TARBALL="$(echo "$SUMS" | awk '{print $2}' | grep -E "^node-v[0-9.]+-linux-$ARCH\.tar\.xz$")"
   TMP="$(mktemp -d)"
-  curl -fsSL "$BASE/$TARBALL" -o "$TMP/$TARBALL"
+  curl -fsSL --retry 4 --retry-delay 3 --retry-all-errors "$BASE/$TARBALL" -o "$TMP/$TARBALL"
   (cd "$TMP" && echo "$SUMS" | grep " $TARBALL\$" | sha256sum -c - >/dev/null)
   rm -rf "$NODE_DIR" && mkdir -p "$NODE_DIR"
   tar -xJf "$TMP/$TARBALL" -C "$NODE_DIR" --strip-components=1
