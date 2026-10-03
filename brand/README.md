@@ -5,7 +5,8 @@
 | `x-profile-1000.png` | X profile photo (main) |
 | `x-profile-wave-1000.png` | Alternative profile photo (waving) |
 | `x-header-1500x500.png` | X header banner. The left-bottom corner is kept clear for the profile photo. |
-| `x-first-tweet-1600x900.png` | Image for the launch tweet ("Meet Mochibo") |
+| `x-launch-banner-2400x1350.jpg` | Launch tweet image (premium version, 16:9) |
+| `x-first-tweet-1600x900.png` | Simpler launch tweet image |
 | `logo-lockup-dark.jpg`, `logo-lockup-transparent.png` | Mascot + "mochibo" wordmark |
 | `mascot-transparent-1024.png`, `mascot-wave-transparent-1024.png` | Mascot on its own, transparent background |
 | `app-icon-512.png` | App icon (head on the brand gradient) |
