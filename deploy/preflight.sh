@@ -37,10 +37,9 @@ if [ -n "$dns_fail" ] && [ "$FIX" = 1 ]; then
   dns_fail=""
   for h in $HOSTS $NODE_HOSTS; do resolves "$h" || dns_fail="$dns_fail $h"; done
 fi
-for h in $HOSTS; do case " $dns_fail " in *" $h "*) bad "cannot resolve $h";; *) ok "resolves $h";; esac; done
-node_dns=0
-for h in $NODE_HOSTS; do case " $dns_fail " in *" $h "*) warn "cannot resolve $h";; *) ok "resolves $h"; node_dns=1;; esac; done
-[ $node_dns = 1 ] || bad "no Node.js download source resolves (nodejs.org or npmmirror.com)"
+# Lookup results are informational: some resolvers fail getent (NSS) but curl still connects.
+# The HTTPS checks below are what decide.
+for h in $HOSTS $NODE_HOSTS; do case " $dns_fail " in *" $h "*) warn "getent cannot resolve $h (checked over HTTPS below)";; *) ok "resolves $h";; esac; done
 
 echo "== HTTPS access"
 for h in $HOSTS; do reachable "$h" && ok "https://$h" || bad "cannot connect to https://$h"; done
