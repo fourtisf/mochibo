@@ -46,6 +46,18 @@ if ! node -v 2>/dev/null | grep -q "^v$NODE_MAJOR\."; then
 fi
 npm install -g "pnpm@$PNPM_VERSION" pm2
 
+echo "==> Pick a free local port for the web app (other apps may already use 3000)"
+PORT_FILE="$APP_DIR/deploy/.web-port"
+WEB_PORT="$(cat "$PORT_FILE" 2>/dev/null || true)"
+if [ -z "$WEB_PORT" ]; then
+  for p in 3000 3100 3200 3300 3400 3500; do
+    if ! ss -ltnH "sport = :$p" | grep -q .; then WEB_PORT=$p; break; fi
+  done
+  [ -n "$WEB_PORT" ] || { echo "No free port found in 3000-3500."; exit 1; }
+  echo "$WEB_PORT" > "$PORT_FILE"; chown "$APP_USER:$APP_USER" "$PORT_FILE"
+fi
+echo "    Using 127.0.0.1:$WEB_PORT"
+
 echo "==> Build"
 sudo -u "$APP_USER" -H bash -c "
   set -e
@@ -60,16 +72,20 @@ sudo -u "$APP_USER" -H bash -c "cd '$APP_DIR' && pm2 startOrReload deploy/ecosys
 pm2 startup systemd -u "$APP_USER" --hp "/home/$APP_USER" >/dev/null
 
 echo "==> Nginx"
-sed "s/__DOMAIN__/$DOMAIN/g" "$APP_DIR/deploy/nginx.conf" > "/etc/nginx/sites-available/$DOMAIN"
+sed -e "s/__DOMAIN__/$DOMAIN/g" -e "s/__PORT__/$WEB_PORT/g" "$APP_DIR/deploy/nginx.conf" > "/etc/nginx/sites-available/$DOMAIN"
 ln -sf "/etc/nginx/sites-available/$DOMAIN" "/etc/nginx/sites-enabled/$DOMAIN"
 # Existing sites are left alone; this server block only answers for $DOMAIN and www.$DOMAIN.
 nginx -t
 systemctl reload nginx
 
-echo "==> Firewall (SSH, HTTP, HTTPS)"
-ufw allow OpenSSH >/dev/null
-ufw allow "Nginx Full" >/dev/null
-ufw --force enable >/dev/null
+echo "==> Firewall"
+if ufw status | grep -q "Status: active"; then
+  ufw allow OpenSSH >/dev/null
+  ufw allow "Nginx Full" >/dev/null
+  echo "    ufw is active: allowed SSH, HTTP and HTTPS"
+else
+  echo "    ufw is not active; left unchanged (other services on this server may need other ports)"
+fi
 
 echo "==> HTTPS certificate"
 certbot --nginx -d "$DOMAIN" -d "www.$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirect

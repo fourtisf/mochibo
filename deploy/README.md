@@ -1,6 +1,6 @@
 # Deploy (Hostinger VPS, Ubuntu)
 
-Phase 1 runs only the Next.js web app: PM2 process `web` on 127.0.0.1:3000 behind Nginx with Let's Encrypt. The API, worker, PostgreSQL and Redis are added in phase 2.
+Phase 1 runs only the Next.js web app: PM2 process `web` on 127.0.0.1 (port 3000 or the next free one) behind Nginx with Let's Encrypt. The API, worker, PostgreSQL and Redis are added in phase 2.
 
 Prerequisites: DNS `A @ -> <VPS IP>` and `CNAME www -> <domain>` (already set for mochibo.studio).
 
@@ -34,7 +34,8 @@ All commands run as root on the VPS.
    Then it:
    - builds the app and starts it under PM2 (it comes back after a reboot)
    - configures Nginx for `mochibo.studio` and `www`
-   - enables ufw for SSH, HTTP and HTTPS
+   - picks a free local port (3000, or 3100 and up if taken) and stores it in `deploy/.web-port`
+   - allows SSH, HTTP and HTTPS in ufw only if ufw is already active (other services may share the server)
    - gets a certificate with an HTTP to HTTPS redirect
 
    Override the defaults with `DOMAIN=...`, `APP_USER=...` or `NODE_MAJOR=...`.
