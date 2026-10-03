@@ -8,20 +8,22 @@ Prerequisites: DNS `A @ -> <VPS IP>` and `CNAME www -> <domain>` (already set fo
 
 All commands run as root on the VPS.
 
-1. Create the app user and a read-only deploy key for GitHub:
+1. Create the app user and clone the repo. The repo is public, so HTTPS needs no key:
 
    ```bash
+   apt-get update && apt-get install -y git
    adduser --disabled-password --gecos "" mochibo
-   sudo -u mochibo ssh-keygen -t ed25519 -N "" -f /home/mochibo/.ssh/id_ed25519 -C "mochibo-vps"
-   cat /home/mochibo/.ssh/id_ed25519.pub
+   sudo -u mochibo git clone https://github.com/fourtisf/ORBIS.git /home/mochibo/app
    ```
 
-2. In GitHub, open the repo > Settings > Deploy keys > Add deploy key. Paste the printed key and leave "Allow write access" off.
+   If the repo becomes private later, use a deploy key instead:
+   - Run `sudo -u mochibo ssh-keygen -t ed25519 -N ""` on the VPS.
+   - In GitHub, add the public key under Settings > Deploy keys, read-only.
+   - Clone with `git@github.com:fourtisf/ORBIS.git`.
 
-3. Clone the repo and run the setup script:
+2. Run the setup script:
 
    ```bash
-   sudo -u mochibo -H bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts && git clone -b <branch> git@github.com:fourtisf/ORBIS.git ~/app'
    EMAIL=you@example.com bash /home/mochibo/app/deploy/setup.sh
    ```
 
