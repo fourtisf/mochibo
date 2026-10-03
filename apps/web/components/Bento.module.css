@@ -1,0 +1,198 @@
+.bento {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(250px, auto);
+  gap: 14px;
+}
+.tile {
+  position: relative;
+  border-radius: 22px;
+  padding: 26px;
+  background: linear-gradient(180deg, #1a1540, #141032);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.tile h3 {
+  font: 640 21px/1.15 var(--display);
+  letter-spacing: -0.025em;
+  margin-bottom: 8px;
+}
+.tile p {
+  font-size: 14.5px;
+  color: var(--ink2);
+  max-width: 28em;
+}
+.dress {
+  grid-column: span 2;
+  grid-row: span 2;
+  padding: 0;
+}
+.dressTop {
+  padding: 26px 26px 0;
+}
+.dressStage {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 10px;
+  padding: 10px 26px 26px;
+  min-height: 420px;
+}
+.portrait {
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  background: radial-gradient(90% 70% at 50% 100%, rgba(255, 143, 184, 0.35), transparent 70%), linear-gradient(180deg, #241d52, #18133d);
+}
+.portrait img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 100%;
+}
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 6px;
+}
+.controls .clbl {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink3);
+  margin-bottom: 8px;
+}
+.wide {
+  grid-column: span 2;
+}
+.typer {
+  margin-top: auto;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink);
+  min-height: 96px;
+}
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  background: var(--violet);
+  vertical-align: -2px;
+  margin-left: 2px;
+  animation: pulse 1s steps(1) infinite;
+}
+.toneRow {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+.cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+.earnNum {
+  font: 660 40px/1 var(--display);
+  letter-spacing: -0.045em;
+  margin-top: auto;
+}
+.earnNum small {
+  font: 500 13px var(--sans);
+  color: var(--aqua);
+  letter-spacing: 0;
+  margin-left: 6px;
+}
+.earnChart {
+  width: calc(100% + 52px);
+  margin: 14px -26px -26px;
+  height: 90px;
+  display: block;
+}
+.sharePill {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 14px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--ink2);
+  overflow: hidden;
+}
+.sharePill span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pgrid {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  padding-top: 18px;
+}
+.pgrid div {
+  aspect-ratio: 1;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  color: var(--ink2);
+  position: relative;
+}
+.pgrid svg {
+  width: 22px;
+  height: 22px;
+}
+.pgrid span {
+  position: absolute;
+  bottom: 6px;
+  font-size: 10.5px;
+  color: var(--ink3);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (max-width: 1100px) {
+  .bento {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .dress,
+  .wide {
+    grid-column: span 2;
+  }
+}
+@media (max-width: 600px) {
+  .bento {
+    grid-template-columns: 1fr;
+  }
+  .dress,
+  .wide {
+    grid-column: span 1;
+  }
+  .dressStage {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .portrait {
+    height: 340px;
+  }
+}

@@ -1,0 +1,114 @@
+.navWrap {
+  position: fixed;
+  top: 12px;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding-top: env(safe-area-inset-top);
+}
+.nav {
+  width: min(1200px, 100% - 24px);
+  margin-inline: auto;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 18px;
+  border-radius: 16px;
+  background: rgba(22, 18, 52, 0.62);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 0 10px 40px -12px rgba(5, 2, 20, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.links {
+  display: flex;
+  gap: 2px;
+}
+.links a {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink2);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  transition: color 0.2s, background 0.2s;
+}
+.links a:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.05);
+}
+.right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.credits {
+  position: relative;
+  display: flex;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  font-weight: 600;
+  font-size: 14px;
+}
+.creditsBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+.crDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: conic-gradient(from 200deg, var(--aqua), var(--violet), var(--pink), var(--aqua));
+  box-shadow: 0 0 12px rgba(110, 240, 210, 0.45);
+}
+.pop {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 260px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #1d1844;
+  border: 1px solid var(--line2);
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
+  display: none;
+  text-align: left;
+  font-weight: 400;
+  cursor: default;
+}
+.pop.open {
+  display: block;
+}
+.pop p {
+  font-size: 13px;
+  color: var(--ink2);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+.row {
+  display: flex;
+  gap: 6px;
+}
+
+@media (max-width: 880px) {
+  .links {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  .creditsBtn {
+    padding: 0 10px;
+  }
+  .walletLabel {
+    display: none;
+  }
+}

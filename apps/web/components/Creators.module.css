@@ -1,0 +1,136 @@
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.flow {
+  border-radius: 22px;
+  padding: 28px;
+  background: linear-gradient(180deg, #1a1540, #141032);
+  border: 1px solid var(--line);
+}
+.flow h3 {
+  font: 640 19px var(--display);
+  letter-spacing: -0.02em;
+}
+.flow ol {
+  list-style: none;
+  counter-reset: s;
+  display: grid;
+  gap: 4px;
+  margin-top: 22px;
+}
+.flow li {
+  counter-increment: s;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.flow li:first-child {
+  border-top: 0;
+}
+.flow li::before {
+  content: counter(s);
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  font: 640 16px var(--display);
+  background: rgba(139, 124, 255, 0.14);
+  color: var(--violet);
+}
+.flow li:last-child::before {
+  background: rgba(110, 240, 210, 0.14);
+  color: var(--aqua);
+}
+.flow b {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 600;
+}
+.flow p {
+  font-size: 14px;
+  color: var(--ink2);
+}
+.board {
+  border-radius: 22px;
+  padding: 8px;
+  background: linear-gradient(180deg, #1a1540, #141032);
+  border: 1px solid var(--line);
+}
+.boardH {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 18px 12px;
+}
+.boardH h3 {
+  font: 640 19px var(--display);
+  letter-spacing: -0.02em;
+}
+.lrow {
+  display: grid;
+  grid-template-columns: 24px 44px 1fr 90px 92px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  transition: background 0.2s;
+}
+.lrow:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+.rk {
+  font: 640 15px var(--display);
+  color: var(--ink3);
+}
+.lrow:nth-child(2) .rk {
+  color: var(--peach);
+}
+.lrow :global(.portrait) {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+.lrow :global(.portrait img) {
+  object-position: 50% 20%;
+}
+.lrow b {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+.lrow span {
+  font-size: 12.5px;
+  color: var(--ink3);
+}
+.lrow svg {
+  width: 90px;
+  height: 30px;
+}
+.amt {
+  text-align: right;
+  font: 640 15px var(--display);
+}
+.amt small {
+  display: block;
+  font: 500 11.5px var(--sans);
+  color: var(--aqua);
+}
+
+@media (max-width: 1100px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .lrow {
+    grid-template-columns: 20px 40px 1fr 76px;
+  }
+  .lrow svg {
+    display: none;
+  }
+}

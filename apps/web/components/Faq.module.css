@@ -1,0 +1,49 @@
+.faq {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 56px;
+}
+.faq :global(.head) {
+  margin-bottom: 0;
+}
+.faq details {
+  border-bottom: 1px solid var(--line);
+}
+.faq summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+.faq summary::after {
+  content: "";
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M5 1v8M1 5h8' stroke='%23F5F3FF' stroke-width='1.6'/%3E%3C/svg%3E")
+    center no-repeat;
+  transition: transform 0.2s var(--ease);
+}
+.faq details[open] summary::after {
+  transform: rotate(45deg);
+}
+.faq details p {
+  padding: 0 40px 20px 0;
+  color: var(--ink2);
+  font-size: 15px;
+}
+@media (max-width: 880px) {
+  .faq {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}

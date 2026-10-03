@@ -1,0 +1,52 @@
+.final {
+  padding: 60px 0 110px;
+}
+.card {
+  position: relative;
+  border-radius: 30px;
+  padding: 72px 30px 0;
+  text-align: center;
+  overflow: hidden;
+  background: radial-gradient(60% 80% at 50% 0%, rgba(139, 124, 255, 0.35), transparent 70%), radial-gradient(40% 60% at 85% 100%, rgba(255, 143, 184, 0.22), transparent 70%),
+    linear-gradient(180deg, #1e1849, #130f31);
+  border: 1px solid var(--line2);
+}
+.card h2 {
+  font: 680 clamp(2.4rem, 5.6vw, 4.6rem) / 0.98 var(--display);
+  letter-spacing: -0.05em;
+  max-width: 12em;
+  margin: 0 auto 18px;
+}
+.card p {
+  color: var(--ink2);
+  margin-bottom: 28px;
+}
+.lineup {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin-top: 40px;
+  height: 225px;
+}
+.lineup img {
+  width: 180px;
+  height: 225px;
+  object-fit: contain;
+  object-position: 50% 100%;
+  margin: 0 -30px;
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.45));
+}
+.lineup img:nth-child(odd) {
+  transform: scale(0.88);
+  transform-origin: 50% 100%;
+}
+@media (max-width: 600px) {
+  .lineup img {
+    width: 120px;
+    height: 150px;
+    margin: 0 -18px;
+  }
+  .lineup {
+    height: 150px;
+  }
+}
