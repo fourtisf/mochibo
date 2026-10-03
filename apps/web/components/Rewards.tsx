@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { REWARDS, TIERS, formatBps } from "@orbis/shared";
+import { REWARDS, TIERS, TOKEN_SYMBOL, formatBps } from "@orbis/shared";
 import { PUBLIC_ENV } from "@/lib/env";
 import { shortAddress } from "@/lib/format";
 import { copyText } from "@/lib/hooks";
@@ -25,13 +25,13 @@ export function Rewards() {
     <section id="rewards">
       <div className={`wrap ${s.rw}`}>
         <div className={s.card}>
-          <h3>Hold ORBIS. Earn tokenized stocks every hour.</h3>
+          <h3>Hold {TOKEN_SYMBOL}. Earn tokenized stocks every hour.</h3>
           <p>Holders pay lower fees and get an hourly reward in tokenized stock on Robinhood Chain. No staking and no lock-up.</p>
           <div className={s.calc}>
             <input
               className="input"
               inputMode="numeric"
-              aria-label="ORBIS held"
+              aria-label={`${TOKEN_SYMBOL} held`}
               value={hold}
               onChange={(e) => {
                 const raw = e.target.value.replace(/[^\d]/g, "");
@@ -76,7 +76,7 @@ export function Rewards() {
             </button>
           </div>
           <p className={`note ${s.fineNote}`}>
-            Sample rate of ${REWARDS.samplePerMillionPerHour} per hour for every 1,000,000 ORBIS. Stock tokens are not shares and are not available to US persons. Not
+            Sample rate of ${REWARDS.samplePerMillionPerHour} per hour for every 1,000,000 {TOKEN_SYMBOL}. Stock tokens are not shares and are not available to US persons. Not
             financial advice.
           </p>
         </div>

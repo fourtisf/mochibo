@@ -4,9 +4,11 @@
  */
 
 /** Working name. The final brand is not decided yet, so it lives in this one place. */
-export const APP_NAME = "Orbis";
+export const APP_NAME = "Mochibo";
 /** Shown in the prototype's mock browser bar. Swap when the domain is decided. */
-export const APP_DISPLAY_HOST = "orbis.studio";
+export const APP_DISPLAY_HOST = "mochibo.studio";
+/** Holder token symbol shown in Rewards. The final ticker is not decided yet. */
+export const TOKEN_SYMBOL = "MOCHIBO";
 
 /** Credits are whole CR in config and UI, stored as centi-credits (1 CR = 100) in the DB. */
 export const CENTI_PER_CREDIT = 100;
@@ -36,7 +38,7 @@ export type TierId = "FREE" | "HOLDER" | "BUILDER" | "WHALE";
 export interface Tier {
   id: TierId;
   name: string;
-  /** Minimum ORBIS held, in whole tokens. */
+  /** Minimum tokens held, in whole tokens. */
   minHold: number;
   /** Short label for the tiers table. */
   holdLabel: string;
@@ -65,7 +67,7 @@ export function formatBps(bps: number): string {
 }
 
 export const REWARDS = {
-  /** Sample rate shown on the landing page: USD of tokenized stock per 1M ORBIS per hour. */
+  /** Sample rate shown on the landing page: USD of tokenized stock per 1M tokens per hour. */
   samplePerMillionPerHour: 0.004,
   sampleAssets: ["NVDA", "TSLA", "AAPL"],
 } as const;
