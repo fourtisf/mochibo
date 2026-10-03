@@ -31,6 +31,8 @@ APT="apt-get -o DPkg::Lock::Timeout=600"
 
 echo "==> System packages"
 export DEBIAN_FRONTEND=noninteractive
+# apt downloads can hang for hours on some VPS networks (often IPv6). Use IPv4 and time out.
+printf 'Acquire::ForceIPv4 "true";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' > /etc/apt/apt.conf.d/99mochibo-network
 wait_for_apt
 $APT update -y
 $APT install -y nginx certbot python3-certbot-nginx git curl ca-certificates ufw
@@ -60,7 +62,7 @@ pm2 startup systemd -u "$APP_USER" --hp "/home/$APP_USER" >/dev/null
 echo "==> Nginx"
 sed "s/__DOMAIN__/$DOMAIN/g" "$APP_DIR/deploy/nginx.conf" > "/etc/nginx/sites-available/$DOMAIN"
 ln -sf "/etc/nginx/sites-available/$DOMAIN" "/etc/nginx/sites-enabled/$DOMAIN"
-rm -f /etc/nginx/sites-enabled/default
+# Existing sites are left alone; this server block only answers for $DOMAIN and www.$DOMAIN.
 nginx -t
 systemctl reload nginx
 
