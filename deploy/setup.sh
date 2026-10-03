@@ -20,6 +20,15 @@ PNPM_VERSION="10.28.0"
 [ "$(id -u)" = 0 ] || { echo "Run as root."; exit 1; }
 [ -f "$APP_DIR/package.json" ] || { echo "Repo not found at $APP_DIR. Clone it first (deploy/README.md)."; exit 1; }
 
+# Always run the latest version of this script: pull first, then restart from the new copy.
+if [ -z "${MOCHIBO_SETUP_PULLED:-}" ]; then
+  echo "==> Getting the latest code"
+  sudo -u "$APP_USER" -H git -C "$APP_DIR" pull --ff-only || { echo "git pull failed (see above)."; exit 1; }
+  echo "    Now at: $(sudo -u "$APP_USER" -H git -C "$APP_DIR" log -1 --format='%h %s')"
+  export MOCHIBO_SETUP_PULLED=1
+  exec bash "$APP_DIR/deploy/setup.sh" "$@"
+fi
+
 echo "==> Preflight (checks everything first; fixes DNS and swap if needed)"
 FIX=1 DOMAIN="$DOMAIN" bash "$APP_DIR/deploy/preflight.sh" || { echo; echo "Fix the problems above, then run setup again."; exit 1; }
 echo
