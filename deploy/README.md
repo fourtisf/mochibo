@@ -21,7 +21,7 @@ All commands run as root on the VPS.
    - In GitHub, add the public key under Settings > Deploy keys, read-only.
    - Clone with `git@github.com:fourtisf/mochibo.git`.
 
-2. Run the setup script:
+2. Run the setup script. It first runs `deploy/preflight.sh`, which checks DNS, network access, the domain, Nginx, memory and disk in one pass, fixes DNS and swap if needed, and stops before changing anything if something is still blocking:
 
    ```bash
    EMAIL=you@example.com bash /home/mochibo/app/deploy/setup.sh

@@ -20,6 +20,10 @@ PNPM_VERSION="10.28.0"
 [ "$(id -u)" = 0 ] || { echo "Run as root."; exit 1; }
 [ -f "$APP_DIR/package.json" ] || { echo "Repo not found at $APP_DIR. Clone it first (deploy/README.md)."; exit 1; }
 
+echo "==> Preflight (checks everything first; fixes DNS and swap if needed)"
+FIX=1 DOMAIN="$DOMAIN" bash "$APP_DIR/deploy/preflight.sh" || { echo; echo "Fix the problems above, then run setup again."; exit 1; }
+echo
+
 # Ubuntu's automatic updates often hold the apt lock for a few minutes after boot. Wait for them.
 wait_for_apt() {
   local waited=0
