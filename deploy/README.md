@@ -13,13 +13,13 @@ All commands run as root on the VPS.
    ```bash
    apt-get update && apt-get install -y git
    adduser --disabled-password --gecos "" mochibo
-   sudo -u mochibo git clone https://github.com/fourtisf/ORBIS.git /home/mochibo/app
+   sudo -u mochibo git clone https://github.com/fourtisf/mochibo.git /home/mochibo/app
    ```
 
    If the repo becomes private later, use a deploy key instead:
    - Run `sudo -u mochibo ssh-keygen -t ed25519 -N ""` on the VPS.
    - In GitHub, add the public key under Settings > Deploy keys, read-only.
-   - Clone with `git@github.com:fourtisf/ORBIS.git`.
+   - Clone with `git@github.com:fourtisf/mochibo.git`.
 
 2. Run the setup script:
 
