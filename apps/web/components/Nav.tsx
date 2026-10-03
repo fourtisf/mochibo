@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { APP_NAME } from "@orbis/shared";
+import { APP_NAME, SOCIAL } from "@orbis/shared";
 import { PUBLIC_ENV } from "@/lib/env";
 import { fmt, shortAddress } from "@/lib/format";
 import { usePreview } from "@/lib/preview/store";
@@ -59,6 +59,11 @@ export function Nav() {
           ))}
         </div>
         <div className={s.right}>
+          <a className={s.social} href={SOCIAL.x} target="_blank" rel="noopener noreferrer" aria-label={`${APP_NAME} on X`}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M17.75 3h3.07l-6.72 7.68L22 21h-6.19l-4.85-6.34L5.4 21H2.33l7.19-8.21L2 3h6.35l4.38 5.79L17.75 3Zm-1.08 16.17h1.7L7.4 4.74H5.58l11.09 14.43Z" />
+            </svg>
+          </a>
           <div className={s.credits} ref={wrapRef}>
             <button
               className={s.creditsBtn}

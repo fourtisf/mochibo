@@ -6,6 +6,7 @@ import { HERO_TASKS, MARKET } from "@/lib/placeholder";
 import { portraitUrl } from "@/lib/images";
 import { isReducedMotion } from "@/lib/hooks";
 import { PowerDock } from "./PowerDock";
+import { ContractBadge } from "./ContractBadge";
 import { Metrics } from "./Metrics";
 import s from "./Hero.module.css";
 
@@ -66,6 +67,7 @@ export function Hero() {
             Explore agents
           </a>
         </div>
+        <ContractBadge />
       </div>
       <div className="wrap">
         <div className={`win ${s.win}`}>

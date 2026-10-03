@@ -1,10 +1,10 @@
-import { APP_NAME } from "@orbis/shared";
+import { APP_NAME, SOCIAL } from "@orbis/shared";
 import s from "./Footer.module.css";
 
 const COLS = [
   ["Product", [["#studio", "Studio"], ["#discover", "Discover"], ["#features", "Skills"], ["#rewards", "Rewards"]]],
   ["Learn", [["#faq", "FAQ"], ["#creators", "For creators"], ["#top", "Whitepaper"], ["#top", "Roadmap"]]],
-  ["Community", [["#top", "X"], ["#top", "Telegram"], ["#top", "GitHub"]]],
+  ["Community", [[SOCIAL.x, "X"], [SOCIAL.telegram || "#top", "Telegram"], ["#top", "GitHub"]]],
 ] as const;
 
 export function Footer() {
@@ -22,7 +22,7 @@ export function Footer() {
             <div key={h}>
               <h4>{h}</h4>
               {links.map(([href, label]) => (
-                <a key={label} href={href}>
+                <a key={label} href={href} {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
                   {label}
                 </a>
               ))}

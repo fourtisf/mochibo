@@ -4,7 +4,7 @@
 | --- | --- |
 | `x-profile-1000.png` | X profile photo (main) |
 | `x-profile-wave-1000.png` | Alternative profile photo (waving) |
-| `x-header-1500x500.png` | X header banner. The left-bottom corner is kept clear for the profile photo. |
+| `x-header-1500x500.png`, `x-header-3000x1000.jpg` | X header banner. The lower-left corner is kept clear for the profile photo. |
 | `x-launch-banner-2400x1350.jpg` | Launch tweet image (premium version, 16:9) |
 | `x-first-tweet-1600x900.png` | Simpler launch tweet image |
 | `logo-lockup-dark.jpg`, `logo-lockup-transparent.png` | Mascot + "mochibo" wordmark |

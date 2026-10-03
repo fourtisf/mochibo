@@ -49,6 +49,21 @@
   align-items: center;
   gap: 8px;
 }
+.social {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink2);
+  transition: color 0.2s, background 0.2s;
+}
+.social:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.07);
+}
 .credits {
   position: relative;
   display: flex;
@@ -112,6 +127,10 @@
 @media (max-width: 600px) {
   .creditsBtn {
     padding: 0 10px;
+  }
+  .social {
+    width: 36px;
+    height: 36px;
   }
   .walletLabel {
     display: none;

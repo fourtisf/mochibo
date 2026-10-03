@@ -10,6 +10,12 @@ export const APP_DISPLAY_HOST = "mochibo.studio";
 /** Holder token symbol shown in Rewards. The final ticker is not decided yet. */
 export const TOKEN_SYMBOL = "MOCHIBO";
 
+/** Official social links. Empty means not live yet. */
+export const SOCIAL = {
+  x: "https://x.com/mochibostudio",
+  telegram: "",
+} as const;
+
 /** Credits are whole CR in config and UI, stored as centi-credits (1 CR = 100) in the DB. */
 export const CENTI_PER_CREDIT = 100;
 

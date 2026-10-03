@@ -1,3 +1,4 @@
+import { SOCIAL } from "@orbis/shared";
 import s from "./Faq.module.css";
 
 const QA = [
@@ -16,7 +17,13 @@ export function Faq() {
       <div className={`wrap ${s.faq}`}>
         <div className="head">
           <h2>Questions, answered.</h2>
-          <p>Anything else, ask us on X or Telegram.</p>
+          <p>
+            Anything else, ask us on{" "}
+            <a href={SOCIAL.x} target="_blank" rel="noopener noreferrer">
+              X
+            </a>{" "}
+            or Telegram.
+          </p>
         </div>
         <div>
           {QA.map(([q, a], i) => (
