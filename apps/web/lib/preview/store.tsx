@@ -1,7 +1,7 @@
 "use client";
 /**
  * PREVIEW STATE (phase 1).
- * Credits, the ledger, the wallet and the studio agent live in browser memory here, exactly
+ * Credits, the ledger and the studio agent live in browser memory here (the wallet is real, see components/wallet), exactly
  * like the prototype, minus its fake incoming runs after publishing. Phase 2 swaps this for SIWE + the agents API (autosave via PATCH),
  * phase 3 for the real ledger. Components only talk to the hooks below, so the swap stays
  * inside this file.
@@ -46,7 +46,6 @@ type SaveState = "Saved" | "Saving…";
 
 interface PreviewStore {
   credits: number;
-  wallet: string | null;
   ledger: LedgerItem[];
   agent: StudioAgent;
   saveState: SaveState;
@@ -58,7 +57,6 @@ interface PreviewStore {
   spend(cost: number, ledgerText: string): boolean;
   addLedger(text: string, amt: number): void;
   setPublished(published: boolean, thumb?: string): void;
-  toggleWallet(): string | null;
 }
 
 const juni = CHARACTER_BY_ID.juni;
@@ -84,7 +82,6 @@ const nowTime = () => new Date().toLocaleTimeString([], { hour: "2-digit", minut
 
 export function PreviewStoreProvider({ children }: { children: ReactNode }) {
   const [credits, setCredits] = useState(500);
-  const [wallet, setWallet] = useState<string | null>(null);
   const [ledger, setLedger] = useState<LedgerItem[]>([]);
   const [agent, setAgent] = useState<StudioAgent>(INITIAL_AGENT);
   const [saveState, setSaveState] = useState<SaveState>("Saved");
@@ -155,23 +152,12 @@ export function PreviewStoreProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const toggleWallet = useCallback(() => {
-    // Mock connect. Phase 2: wagmi + Sign-In with Ethereum on Robinhood Chain.
-    if (wallet) {
-      setWallet(null);
-      return null;
-    }
-    let a = "0x";
-    for (let i = 0; i < 40; i++) a += "0123456789abcdef"[Math.floor(Math.random() * 16)];
-    setWallet(a);
-    return a;
-  }, [wallet]);
 
   useEffect(() => () => clearTimeout(saveTimer.current), []);
 
   const value = useMemo<PreviewStore>(
-    () => ({ credits, wallet, ledger, agent, saveState, updateAgent, setCfg, replaceCfg, addCredits, spend, addLedger, setPublished, toggleWallet }),
-    [credits, wallet, ledger, agent, saveState, updateAgent, setCfg, replaceCfg, addCredits, spend, addLedger, setPublished, toggleWallet],
+    () => ({ credits, ledger, agent, saveState, updateAgent, setCfg, replaceCfg, addCredits, spend, addLedger, setPublished }),
+    [credits, ledger, agent, saveState, updateAgent, setCfg, replaceCfg, addCredits, spend, addLedger, setPublished],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

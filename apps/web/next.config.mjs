@@ -12,6 +12,20 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   transpilePackages: ["@orbis/shared", "@orbis/characters"],
+  webpack(config) {
+    // Optional peers of the Coinbase SDK (x402 payments) that wagmi pulls in but we never use,
+    // plus Node-only modules some wallet SDKs reference. Resolve them to empty modules.
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      "@x402/core/client": false,
+      "@x402/evm": false,
+      "@x402/evm/exact/client": false,
+      "@x402/evm/upto/client": false,
+      "@x402/svm/exact/client": false,
+    };
+    config.externals.push("pino-pretty", "lokijs", "encoding");
+    return config;
+  },
   async headers() {
     return [
       { source: "/embed/:path*", headers: frameAll },

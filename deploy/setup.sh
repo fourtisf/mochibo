@@ -97,7 +97,7 @@ echo "==> Build"
 sudo -u "$APP_USER" -H env PATH="$PATH" bash -c "
   set -e
   cd '$APP_DIR'
-  echo 'NEXT_PUBLIC_APP_URL=https://$DOMAIN' > apps/web/.env.production.local
+  { echo 'NEXT_PUBLIC_APP_URL=https://$DOMAIN'; [ -f /home/$APP_USER/mochibo.env ] && cat /home/$APP_USER/mochibo.env; true; } > apps/web/.env.production.local
   pnpm install --frozen-lockfile
   pnpm build
 "

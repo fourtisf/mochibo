@@ -9,6 +9,8 @@ sudo -u "$APP_USER" -H env PATH="$PATH" bash -c "
   set -e
   cd '$APP_DIR'
   git pull --ff-only
+  # Public settings are baked in at build time: app URL plus anything in ~/mochibo.env.
+  { echo \"NEXT_PUBLIC_APP_URL=https://\${DOMAIN:-mochibo.studio}\"; [ -f ~/mochibo.env ] && cat ~/mochibo.env; true; } > apps/web/.env.production.local
   pnpm install --frozen-lockfile
   pnpm build
   pm2 reload deploy/ecosystem.config.cjs

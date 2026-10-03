@@ -40,6 +40,22 @@ All commands run as root on the VPS.
 
    Override the defaults with `DOMAIN=...`, `APP_USER=...` or `NODE_MAJOR=...`.
 
+## Public settings (wallets, token, chain)
+
+Put browser-safe settings in `/home/mochibo/mochibo.env`. Both scripts copy this file into the build. Never put secrets here: everything in it is visible in the browser.
+
+```bash
+cat > /home/mochibo/mochibo.env <<'ENV'
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=   # free at cloud.reown.com; needed for mobile wallets and QR codes
+NEXT_PUBLIC_TOKEN_ADDRESS=              # leave empty until the token is live ("CA: Coming soon")
+NEXT_PUBLIC_CHAIN_ID=                   # Robinhood Chain id, from the official docs
+NEXT_PUBLIC_RPC_URL=                    # from the official docs
+NEXT_PUBLIC_EXPLORER_URL=               # optional
+ENV
+chown mochibo:mochibo /home/mochibo/mochibo.env
+bash /home/mochibo/app/deploy/update.sh
+```
+
 ## Update to the latest code
 
 ```bash

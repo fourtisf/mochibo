@@ -26,6 +26,17 @@
   height: 30px;
   filter: drop-shadow(0 2px 6px rgba(255, 79, 154, 0.35));
 }
+.account {
+  gap: 9px;
+  padding: 0 14px 0 8px;
+}
+.avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: conic-gradient(from 210deg, var(--pink), var(--violet), var(--aqua), var(--pink));
+  box-shadow: 0 0 10px rgba(255, 143, 184, 0.45);
+}
 .links {
   display: flex;
   gap: 2px;

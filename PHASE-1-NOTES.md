@@ -116,3 +116,13 @@ Everything below is isolated so the swap stays local.
   - New pages: `/roadmap`, `/terms` and `/privacy`.
 - **SEO.** Added `robots.txt` (embeds excluded) and `sitemap.xml`.
 - **Open for the owner and Michael:** the Terms and Privacy pages are plain-language preview versions. Have a lawyer review them before paid credits or the token go live.
+
+## Update: real wallet connect (start of phase 2)
+
+- **RainbowKit 2 on wagmi 2 and viem 2.** The modal lists MetaMask, Coinbase, Rabby, OKX, Phantom, Trust, Rainbow, Bitget, Binance, Zerion, Brave and any wallet that announces itself (EIP-6963), each with its logo. It is themed to the site.
+- **Lazy loading.** `components/wallet/WalletButton.tsx` is loaded lazily from the nav (`next/dynamic`, `ssr: false`), so the wallet libraries are not in the first-load bundle (home first load is about 129 KB).
+- **Chain.** `lib/wallet/chain.ts` reads Robinhood Chain from `NEXT_PUBLIC_CHAIN_ID` and `NEXT_PUBLIC_RPC_URL`. The official docs were not reachable from the build environment, so nothing is hardcoded. Until the values are set, wallets connect without a network switch; the address is the same on every EVM chain.
+- **WalletConnect.** `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (free at cloud.reown.com) enables mobile wallets and QR codes. Without it, browser-extension wallets still work.
+- **Webpack.** `next.config.mjs` maps optional x402 peers of the Coinbase SDK to empty modules (a known wagmi 2 build issue).
+- **Not done yet.** Sign-In with Ethereum (nonce, signature, session cookie) needs the Fastify API, which is the next phase 2 step. The preview mock wallet was removed.
+- **VPS settings.** Public settings go in `/home/mochibo/mochibo.env` (see `deploy/README.md`) and are baked in at build time.
