@@ -18,15 +18,29 @@ PNPM_VERSION="10.28.0"
 [ "$(id -u)" = 0 ] || { echo "Run as root."; exit 1; }
 [ -f "$APP_DIR/package.json" ] || { echo "Repo not found at $APP_DIR. Clone it first (deploy/README.md)."; exit 1; }
 
+# Ubuntu's automatic updates often hold the apt lock for a few minutes after boot. Wait for them.
+wait_for_apt() {
+  local waited=0
+  while pgrep -x 'apt|apt-get|dpkg|unattended-upgr' >/dev/null || pgrep -f '/usr/bin/unattended-upgrade' >/dev/null; do
+    [ $waited = 0 ] && echo "    Waiting for another apt/dpkg process (usually automatic updates) to finish..."
+    sleep 5; waited=$((waited + 5))
+    [ $waited -ge 1200 ] && { echo "Still locked after 20 minutes. Check: ps aux | grep -i apt"; exit 1; }
+  done
+}
+APT="apt-get -o DPkg::Lock::Timeout=600"
+
 echo "==> System packages"
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -y
-apt-get install -y nginx certbot python3-certbot-nginx git curl ca-certificates ufw
+wait_for_apt
+$APT update -y
+$APT install -y nginx certbot python3-certbot-nginx git curl ca-certificates ufw
 
 echo "==> Node.js $NODE_MAJOR"
 if ! node -v 2>/dev/null | grep -q "^v$NODE_MAJOR\."; then
+  wait_for_apt
   curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
-  apt-get install -y nodejs
+  wait_for_apt
+  $APT install -y nodejs
 fi
 npm install -g "pnpm@$PNPM_VERSION" pm2
 
