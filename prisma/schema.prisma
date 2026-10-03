@@ -1,0 +1,188 @@
+// Draft schema for Orbis Agent Studio. Money is stored as BigInt centi-credits (1 CR = 100).
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Tone {
+  FRIENDLY
+  PROFESSIONAL
+  CONCISE
+}
+
+enum Lang {
+  EN
+  ID
+}
+
+enum Tier {
+  FREE
+  HOLDER
+  BUILDER
+  WHALE
+}
+
+enum RunStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+  REFUNDED
+}
+
+enum LedgerType {
+  TOPUP
+  RUN_DEBIT
+  RUN_CREDIT
+  REFUND
+  CLAIM_REQUEST
+  CLAIM_REVERT
+  ADMIN_GRANT
+  ADJUST
+}
+
+enum DepositStatus {
+  SEEN
+  CONFIRMED
+  CREDITED
+}
+
+enum ClaimStatus {
+  PENDING
+  SUBMITTED
+  PAID
+  EXPIRED
+}
+
+model User {
+  id            String        @id @default(cuid())
+  wallet        String        @unique // lowercased 0x address
+  balance       BigInt        @default(0) // centi-credits, cached from ledger
+  tier          Tier          @default(FREE)
+  tierCheckedAt DateTime?
+  isAdmin       Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  agents        Agent[]
+  runs          Run[]         @relation("Runner")
+  ledger        LedgerEntry[]
+  claims        Claim[]
+  ratings       Rating[]
+}
+
+model Agent {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  ownerId      String
+  owner        User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name         String    @db.VarChar(32)
+  instructions String    @db.VarChar(2000) // private: owner and AI provider only
+  tone         Tone      @default(FRIENDLY)
+  lang         Lang      @default(EN)
+  character    Json // validated CharacterConfig
+  skills       String[] // max 4, ids from the fixed skill list
+  price        Int       @default(0) // whole CR, 0 to 500
+  published    Boolean   @default(false)
+  publishedAt  DateTime?
+  thumbnailUrl String?
+  runsCount    Int       @default(0)
+  earnedTotal  BigInt    @default(0) // centi-credits
+  ratingSum    Int       @default(0)
+  ratingCount  Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  runs         Run[]
+  ratings      Rating[]
+
+  @@index([published, runsCount])
+  @@index([ownerId])
+}
+
+model Run {
+  id         String    @id @default(cuid())
+  agentId    String
+  agent      Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  runnerId   String
+  runner     User      @relation("Runner", fields: [runnerId], references: [id])
+  skillId    String
+  task       String    @db.VarChar(4000)
+  output     String?
+  status     RunStatus @default(PENDING)
+  cost       BigInt // centi-credits charged to the runner
+  creatorNet BigInt    @default(0)
+  fee        BigInt    @default(0)
+  model      String?
+  tokensIn   Int?
+  tokensOut  Int?
+  error      String?
+  createdAt  DateTime  @default(now())
+  finishedAt DateTime?
+  rating     Rating?
+
+  @@index([agentId, createdAt])
+  @@index([runnerId, createdAt])
+}
+
+model LedgerEntry {
+  id             String     @id @default(cuid())
+  userId         String
+  user           User       @relation(fields: [userId], references: [id])
+  type           LedgerType
+  amount         BigInt // signed centi-credits
+  balanceAfter   BigInt
+  refType        String? // "run" | "deposit" | "claim" | "admin"
+  refId          String?
+  idempotencyKey String     @unique
+  memo           String?
+  createdAt      DateTime   @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Deposit {
+  id          String        @id @default(cuid())
+  txHash      String
+  logIndex    Int
+  wallet      String
+  amountRaw   String // USDG base units
+  credits     BigInt // centi-credits
+  blockNumber BigInt
+  status      DepositStatus @default(SEEN)
+  createdAt   DateTime      @default(now())
+
+  @@unique([txHash, logIndex])
+  @@index([wallet])
+}
+
+model Claim {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  credits   BigInt // centi-credits debited
+  amountRaw String // USDG base units in the voucher
+  nonce     String      @unique
+  signature String
+  expiresAt DateTime
+  status    ClaimStatus @default(PENDING)
+  txHash    String?
+  createdAt DateTime    @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  runId     String   @unique
+  run       Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  stars     Int // 1 to 5
+  createdAt DateTime @default(now())
+
+  @@index([agentId])
+}
