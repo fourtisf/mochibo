@@ -3,8 +3,9 @@
 set -euo pipefail
 APP_USER="${APP_USER:-mochibo}"
 APP_DIR="/home/$APP_USER/app"
+export PATH="/opt/mochibo-node/bin:$PATH"
 
-sudo -u "$APP_USER" -H bash -c "
+sudo -u "$APP_USER" -H env PATH="$PATH" bash -c "
   set -e
   cd '$APP_DIR'
   git pull --ff-only
@@ -14,4 +15,4 @@ sudo -u "$APP_USER" -H bash -c "
   pm2 save
 "
 echo "Updated. PM2 status:"
-sudo -u "$APP_USER" -H pm2 status
+sudo -u "$APP_USER" -H env PATH="$PATH" pm2 status

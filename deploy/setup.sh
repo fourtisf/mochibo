@@ -13,6 +13,8 @@ EMAIL="${EMAIL:?Set EMAIL=you@example.com (used for certificate expiry notices)}
 APP_USER="${APP_USER:-mochibo}"
 APP_DIR="/home/$APP_USER/app"
 NODE_MAJOR="${NODE_MAJOR:-22}"
+# Private Node.js for this app only, so other apps on the server keep their own Node version.
+NODE_DIR="/opt/mochibo-node"
 PNPM_VERSION="10.28.0"
 
 [ "$(id -u)" = 0 ] || { echo "Run as root."; exit 1; }
@@ -34,17 +36,31 @@ export DEBIAN_FRONTEND=noninteractive
 # apt downloads can hang for hours on some VPS networks (often IPv6). Use IPv4 and time out.
 printf 'Acquire::ForceIPv4 "true";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' > /etc/apt/apt.conf.d/99mochibo-network
 wait_for_apt
-$APT update -y
-$APT install -y nginx certbot python3-certbot-nginx git curl ca-certificates ufw
+# Third-party sources added by other apps can fail (for example, an expired signing key).
+# The Ubuntu sources are what we need, so a partial failure is not fatal.
+$APT update -y || echo "    Some package sources failed to update (see above). Continuing with the current package lists."
+$APT install -y nginx certbot python3-certbot-nginx git curl ca-certificates ufw xz-utils
 
-echo "==> Node.js $NODE_MAJOR"
-if ! node -v 2>/dev/null | grep -q "^v$NODE_MAJOR\."; then
-  wait_for_apt
-  curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
-  wait_for_apt
-  $APT install -y nodejs
+echo "==> Node.js $NODE_MAJOR (private copy in $NODE_DIR)"
+if ! "$NODE_DIR/bin/node" -v 2>/dev/null | grep -q "^v$NODE_MAJOR\."; then
+  case "$(uname -m)" in
+    x86_64) ARCH=x64 ;;
+    aarch64) ARCH=arm64 ;;
+    *) echo "Unsupported CPU: $(uname -m)"; exit 1 ;;
+  esac
+  BASE="https://nodejs.org/dist/latest-v${NODE_MAJOR}.x"
+  SUMS="$(curl -fsSL "$BASE/SHASUMS256.txt")"
+  TARBALL="$(echo "$SUMS" | awk '{print $2}' | grep -E "^node-v[0-9.]+-linux-$ARCH\.tar\.xz$")"
+  TMP="$(mktemp -d)"
+  curl -fsSL "$BASE/$TARBALL" -o "$TMP/$TARBALL"
+  (cd "$TMP" && echo "$SUMS" | grep " $TARBALL\$" | sha256sum -c - >/dev/null)
+  rm -rf "$NODE_DIR" && mkdir -p "$NODE_DIR"
+  tar -xJf "$TMP/$TARBALL" -C "$NODE_DIR" --strip-components=1
+  rm -rf "$TMP"
 fi
-npm install -g "pnpm@$PNPM_VERSION" pm2
+export PATH="$NODE_DIR/bin:$PATH"
+echo "    $(node -v)"
+npm install -g --silent "pnpm@$PNPM_VERSION" pm2
 
 echo "==> Pick a free local port for the web app (other apps may already use 3000)"
 PORT_FILE="$APP_DIR/deploy/.web-port"
@@ -59,7 +75,7 @@ fi
 echo "    Using 127.0.0.1:$WEB_PORT"
 
 echo "==> Build"
-sudo -u "$APP_USER" -H bash -c "
+sudo -u "$APP_USER" -H env PATH="$PATH" bash -c "
   set -e
   cd '$APP_DIR'
   echo 'NEXT_PUBLIC_APP_URL=https://$DOMAIN' > apps/web/.env.production.local
@@ -68,7 +84,7 @@ sudo -u "$APP_USER" -H bash -c "
 "
 
 echo "==> Start with PM2"
-sudo -u "$APP_USER" -H bash -c "cd '$APP_DIR' && pm2 startOrReload deploy/ecosystem.config.cjs && pm2 save"
+sudo -u "$APP_USER" -H env PATH="$PATH" bash -c "cd '$APP_DIR' && pm2 startOrReload deploy/ecosystem.config.cjs && pm2 save"
 pm2 startup systemd -u "$APP_USER" --hp "/home/$APP_USER" >/dev/null
 
 echo "==> Nginx"

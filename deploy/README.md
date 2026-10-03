@@ -28,7 +28,7 @@ All commands run as root on the VPS.
    ```
 
    The script installs:
-   - Node 22, pnpm 10 and PM2
+   - a private copy of Node 22 in `/opt/mochibo-node` (other apps on the server keep their own Node), plus pnpm 10 and PM2
    - Nginx and certbot
 
    Then it:
@@ -49,8 +49,9 @@ bash /home/mochibo/app/deploy/update.sh
 ## Useful commands
 
 ```bash
-sudo -u mochibo pm2 status          # process list
-sudo -u mochibo pm2 logs web        # app logs
+export PATH=/opt/mochibo-node/bin:$PATH
+sudo -u mochibo env PATH=$PATH pm2 status     # process list
+sudo -u mochibo env PATH=$PATH pm2 logs web   # app logs
 nginx -t && systemctl reload nginx  # after editing the Nginx site
 certbot renew --dry-run             # check auto-renewal (a systemd timer runs it)
 ```
