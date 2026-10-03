@@ -21,6 +21,11 @@
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   box-shadow: 0 10px 40px -12px rgba(5, 2, 20, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
+.logoImg {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 2px 6px rgba(255, 79, 154, 0.35));
+}
 .links {
   display: flex;
   gap: 2px;

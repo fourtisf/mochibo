@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { APP_NAME } from "@orbis/shared";
-import { LogoMark } from "@/lib/icons";
 import { PUBLIC_ENV } from "@/lib/env";
 import { fmt, shortAddress } from "@/lib/format";
 import { usePreview } from "@/lib/preview/store";
@@ -49,7 +48,7 @@ export function Nav() {
     <header className={s.navWrap}>
       <nav className={s.nav} aria-label="Main">
         <a className="logo" href="#top" aria-label={`${APP_NAME} home`}>
-          <LogoMark />
+          <img src="/brand/mochibo-head.png" alt="" width={30} height={30} className={s.logoImg} />
           {APP_NAME}
         </a>
         <div className={s.links}>

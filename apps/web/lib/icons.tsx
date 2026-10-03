@@ -32,24 +32,6 @@ export function PowerIcon({ name, size = 22 }: { name: PowerName; size?: number 
   );
 }
 
-export function LogoMark() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
-      <defs>
-        <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#8B7CFF" />
-          <stop offset=".55" stopColor="#FF8FB8" />
-          <stop offset="1" stopColor="#FFB38A" />
-        </linearGradient>
-      </defs>
-      <rect x="2" y="2" width="28" height="28" rx="10" fill="url(#lg)" />
-      <circle cx="12" cy="15" r="2.6" fill="#120E2B" />
-      <circle cx="20" cy="15" r="2.6" fill="#120E2B" />
-      <path d="M12.5 20.5c2 1.6 5 1.6 7 0" stroke="#120E2B" strokeWidth="2" fill="none" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export function StarIcon() {
   return (
     <svg width="11" height="11" viewBox="0 0 24 24" fill="#FFE27A" aria-hidden="true">
