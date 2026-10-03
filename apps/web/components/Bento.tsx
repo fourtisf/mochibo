@@ -180,7 +180,7 @@ export function Bento() {
             <h3>Earn on every run</h3>
             <p>Set a price. Get paid in credits.</p>
             <div className={s.earnNum}>
-              <span ref={earnRef}>0</span> CR<small>this week</small>
+              <span ref={earnRef}>0</span> CR<small>example week</small>
             </div>
             <svg className={s.earnChart} viewBox="0 0 300 90" preserveAspectRatio="none" aria-hidden="true">
               <defs>
@@ -196,7 +196,7 @@ export function Bento() {
 
           <div className={`${s.tile} ${s.wide}`}>
             <h3>Share it as a link or put it on any page</h3>
-            <p>Your whole agent fits in one link. Drop a live preview into a site with one line of code.</p>
+            <p>Share your agent with one link. Drop a live preview into a site with one line of code.</p>
             <div className={s.sharePill}>
               <span>{shareShort}</span>
               <button

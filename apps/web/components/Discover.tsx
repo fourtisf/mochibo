@@ -64,8 +64,10 @@ export function Discover() {
       <div className="wrap">
         <div className={s.top}>
           <div className="head">
-            <h2>Agents people run every day.</h2>
-            <p>Pay per run in credits. Creators keep the price minus a {formatBps(ECONOMICS.platformFeeBps)} fee.</p>
+            <h2>Agents you can run today.</h2>
+            <p>
+              Example agents for the preview. Pay per run in credits. Creators keep the price minus a {formatBps(ECONOMICS.platformFeeBps)} fee.
+            </p>
           </div>
           <div className={`seg ${s.filters}`}>
             {cats.map((c) => (
@@ -82,14 +84,20 @@ export function Discover() {
               <article className={s.ag} key={m.id}>
                 <Portrait src={m.thumb} glow={m.glow}>
                   {m.mine && <span className={s.yours}>Yours</span>}
-                  <span className={s.rating}>
-                    <StarIcon />
-                    {m.rating.toFixed(1)}
-                  </span>
+                  {m.mine ? (
+                    m.runs > 0 && (
+                      <span className={s.rating}>
+                        <StarIcon />
+                        {m.rating.toFixed(1)}
+                      </span>
+                    )
+                  ) : (
+                    <span className={s.rating}>Example</span>
+                  )}
                 </Portrait>
                 <div className={s.b}>
                   <h3>{m.name}</h3>
-                  <div className={s.by}>by {m.by}</div>
+                  <div className={s.by}>{m.mine ? "by you" : `Example agent · ${m.by}`}</div>
                   <p>{m.desc}</p>
                   <div className={s.tags}>
                     {m.skills.map((id) => (
@@ -101,7 +109,7 @@ export function Discover() {
                   </div>
                   <div className={s.f}>
                     <div className={s.price}>
-                      {m.price} CR<small>{fmt(m.runs)} runs</small>
+                      {m.price} CR<small>{m.mine ? `${fmt(m.runs)} runs` : "per run"}</small>
                     </div>
                     <button className={`btn ${m.mine ? "btn-glass" : "btn-primary"} btn-sm`} onClick={() => open(m)}>
                       {m.mine ? "Test it" : "Run"}

@@ -40,6 +40,14 @@
   transform: scale(0.88);
   transform-origin: 50% 100%;
 }
+.lineup img.mascot {
+  width: 250px;
+  height: 250px;
+  margin: 0 -34px;
+  transform: none;
+  position: relative;
+  z-index: 1;
+}
 @media (max-width: 600px) {
   .lineup img {
     width: 120px;
@@ -48,5 +56,10 @@
   }
   .lineup {
     height: 150px;
+  }
+  .lineup img.mascot {
+    width: 168px;
+    height: 168px;
+    margin: 0 -22px;
   }
 }

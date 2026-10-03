@@ -19,17 +19,6 @@
   max-width: 32em;
   margin-bottom: 24px;
 }
-.calc {
-  display: grid;
-  grid-template-columns: 1fr 130px;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.calc :global(.input) {
-  height: 50px;
-  font-size: 17px;
-  font-weight: 600;
-}
 .out4 {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -109,8 +98,5 @@
 @media (max-width: 600px) {
   .out4 {
     grid-template-columns: 1fr 1fr;
-  }
-  .calc {
-    grid-template-columns: 1fr;
   }
 }

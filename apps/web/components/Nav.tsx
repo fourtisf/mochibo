@@ -12,7 +12,7 @@ const LINKS = [
   ["#studio", "Studio"],
   ["#discover", "Discover"],
   ["#creators", "Creators"],
-  ["#rewards", "Rewards"],
+  ["#rewards", "Holders"],
   ["#faq", "FAQ"],
 ] as const;
 

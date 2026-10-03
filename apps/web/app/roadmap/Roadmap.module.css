@@ -1,0 +1,32 @@
+.list {
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+.list > li {
+  position: relative;
+  padding: 24px 26px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #1a1540, #141032);
+  border: 1px solid var(--line);
+}
+.list > li.live {
+  border-color: rgba(110, 240, 210, 0.45);
+  box-shadow: 0 0 0 1px rgba(110, 240, 210, 0.12), 0 30px 60px -30px rgba(110, 240, 210, 0.25);
+}
+.list h2 {
+  margin: 10px 0 10px !important;
+}
+.state {
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(139, 124, 255, 0.16);
+  color: var(--violet);
+}
+.live .state {
+  background: rgba(110, 240, 210, 0.14);
+  color: var(--aqua);
+}

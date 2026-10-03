@@ -1,7 +1,8 @@
 import { fullBodyUrl } from "@/lib/images";
 import s from "./Final.module.css";
 
-const LINEUP = ["kofi", "sora", "juni", "pip", "dara"];
+const LEFT = ["kofi", "sora"];
+const RIGHT = ["pip", "dara"];
 
 export function Final() {
   return (
@@ -19,7 +20,11 @@ export function Final() {
             </a>
           </div>
           <div className={s.lineup}>
-            {LINEUP.map((id) => (
+            {LEFT.map((id) => (
+              <img key={id} alt="" src={fullBodyUrl(id)} loading="lazy" decoding="async" />
+            ))}
+            <img className={s.mascot} alt="Mochibo" src="/brand/mochibo-wave.webp" loading="lazy" decoding="async" />
+            {RIGHT.map((id) => (
               <img key={id} alt="" src={fullBodyUrl(id)} loading="lazy" decoding="async" />
             ))}
           </div>

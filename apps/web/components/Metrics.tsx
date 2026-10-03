@@ -1,11 +1,19 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { TIERS, formatBps } from "@orbis/shared";
-import { METRICS } from "@/lib/placeholder";
+import { CHARACTERS, ECONOMICS, LIMITS, SKILLS, formatBps } from "@orbis/shared";
 import { countUp } from "@/lib/countup";
 import s from "./Hero.module.css";
 
-const whale = TIERS[TIERS.length - 1];
+/**
+ * Product facts while there is no real usage yet. Phase 3 swaps these for live numbers
+ * from GET /stats (agents built, runs, paid to creators).
+ */
+const FACTS = [
+  { value: CHARACTERS.length, label: "characters to start from" },
+  { value: SKILLS.length, label: "working skills to equip" },
+  { value: LIMITS.priceMax, label: "CR max price you can set per run" },
+  { value: Number(formatBps(ECONOMICS.platformFeeBps).replace("%", "")), suffix: "%", label: "creator fee, lower for holders" },
+];
 
 export function Metrics() {
   const ref = useRef<HTMLDivElement>(null);
@@ -17,7 +25,7 @@ export function Metrics() {
         es.forEach((en) => {
           if (!en.isIntersecting) return;
           const b = en.target as HTMLElement;
-          stops.push(countUp(b, +b.dataset.count!, +(b.dataset.dec || 0), b.dataset.prefix || "", b.dataset.suffix || ""));
+          stops.push(countUp(b, +b.dataset.count!, 0, "", b.dataset.suffix || ""));
           obs.unobserve(b);
         }),
       { threshold: 0.6 },
@@ -29,26 +37,19 @@ export function Metrics() {
     };
   }, []);
 
-  const whaleFee = parseFloat(formatBps(whale.feeBps));
   return (
     <>
       <div className={s.metrics} ref={ref}>
-        {METRICS.map((m) => (
+        {FACTS.map((m) => (
           <div className={s.metric} key={m.label}>
-            <b data-count={m.value} data-dec={m.dec} data-prefix={m.prefix} data-suffix={m.suffix}>
+            <b data-count={m.value} data-suffix={m.suffix || ""}>
               0
             </b>
             <span>{m.label}</span>
           </div>
         ))}
-        <div className={s.metric}>
-          <b data-count={whaleFee} data-suffix="%">
-            0
-          </b>
-          <span>run fee for {whale.name} holders</span>
-        </div>
       </div>
-      <div className={s.metricsNote}>Preview figures</div>
+      <div className={s.metricsNote}>Live usage stats appear here once publishing opens</div>
     </>
   );
 }

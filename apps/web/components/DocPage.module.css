@@ -1,0 +1,65 @@
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(16, 13, 38, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+.bar {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.bar img {
+  width: 30px;
+  height: 30px;
+}
+.main {
+  position: relative;
+  z-index: 1;
+  padding: 72px 0 96px;
+}
+.doc {
+  max-width: 760px;
+  margin-inline: auto;
+}
+.doc h1 {
+  font: 680 clamp(2.4rem, 5vw, 3.6rem) / 1 var(--display);
+  letter-spacing: -0.045em;
+  margin-bottom: 14px;
+}
+.lede {
+  font-size: 1.1rem;
+  color: var(--ink2);
+  margin-bottom: 40px;
+}
+.doc h2 {
+  font: 640 22px/1.2 var(--display);
+  letter-spacing: -0.02em;
+  margin: 36px 0 10px;
+}
+.doc p,
+.doc li {
+  color: var(--ink2);
+  font-size: 15.5px;
+}
+.doc ul {
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+}
+.doc a {
+  color: var(--ink);
+}
+.updated {
+  font-size: 13px;
+  color: var(--ink3);
+}
+@media (max-width: 430px) {
+  .xBtn {
+    display: none;
+  }
+}

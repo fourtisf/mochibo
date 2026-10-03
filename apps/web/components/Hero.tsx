@@ -53,7 +53,7 @@ export function Hero() {
       <div className={`wrap ${s.head}`}>
         <a className={s.announce} href="#studio">
           <span className={s.pd} />
-          New: schedule any skill to run every day <b>See how</b>
+          Preview is live <b>Try the studio</b>
         </a>
         <h1>AI agents with a face, a wardrobe and a job.</h1>
         <p className={s.lede}>
@@ -109,7 +109,7 @@ export function Hero() {
               </div>
             </div>
             <div className={`${s.fcard} ${s.fcEarn} glass${swap ? " " + s.swap : ""}`}>
-              <div className={s.fcS}>Earned from {earnFrom}</div>
+              <div className={s.fcS}>Example payout · {earnFrom}</div>
               <div className={s.earnBig}>+{earnVal} CR</div>
               <svg className={s.spark} viewBox="0 0 200 34" preserveAspectRatio="none" aria-hidden="true">
                 <defs>

@@ -2,7 +2,7 @@
 /**
  * PREVIEW STATE (phase 1).
  * Credits, the ledger, the wallet and the studio agent live in browser memory here, exactly
- * like the prototype. Phase 2 swaps this for SIWE + the agents API (autosave via PATCH),
+ * like the prototype, minus its fake incoming runs after publishing. Phase 2 swaps this for SIWE + the agents API (autosave via PATCH),
  * phase 3 for the real ledger. Components only talk to the hooks below, so the swap stays
  * inside this file.
  */
@@ -166,23 +166,6 @@ export function PreviewStoreProvider({ children }: { children: ReactNode }) {
     setWallet(a);
     return a;
   }, [wallet]);
-
-  // Simulated incoming runs while published (prototype behaviour). Phase 3 removes this:
-  // runs and earnings come from the ledger.
-  const agentRef = useRef(agent);
-  agentRef.current = agent;
-  const published = agent.published;
-  useEffect(() => {
-    if (!published) return;
-    const t = setInterval(() => {
-      const a = agentRef.current;
-      if (!a.published) return;
-      const net = +(a.price * (1 - ECONOMICS.platformFeeBps / 10_000)).toFixed(2);
-      addLedger(`Someone ran ${a.name}`, net);
-      setAgent((cur) => ({ ...cur, runs: cur.runs + 1, earned: +(cur.earned + net).toFixed(2) }));
-    }, 6500);
-    return () => clearInterval(t);
-  }, [published, addLedger]);
 
   useEffect(() => () => clearTimeout(saveTimer.current), []);
 

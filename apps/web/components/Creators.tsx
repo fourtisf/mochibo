@@ -1,8 +1,3 @@
-import { CHARACTER_BY_ID } from "@orbis/shared";
-import { LEADERS } from "@/lib/placeholder";
-import { portraitUrl } from "@/lib/images";
-import { fmt, sparkPath } from "@/lib/format";
-import { Portrait } from "./Portrait";
 import s from "./Creators.module.css";
 
 const STEPS = [
@@ -37,28 +32,15 @@ export function Creators() {
           <div className={s.board}>
             <div className={s.boardH}>
               <h3>Top creators this week</h3>
-              <span className="pill">Preview data</span>
+              <span className="pill">Opens with publishing</span>
             </div>
-            <div>
-              {LEADERS.map((l, i) => {
-                const glow = CHARACTER_BY_ID[l.char].config.glow;
-                return (
-                  <div className={s.lrow} key={l.handle}>
-                    <span className={s.rk}>{i + 1}</span>
-                    <Portrait src={portraitUrl(l.char)} glow={glow} />
-                    <div>
-                      <b>{l.handle}</b>
-                      <span>{l.agent}</span>
-                    </div>
-                    <svg viewBox="0 0 90 30" preserveAspectRatio="none" aria-hidden="true">
-                      <path d={sparkPath(l.spark, 90, 30)} fill="none" stroke={glow} strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                    <div className={s.amt}>
-                      {fmt(l.earned)} CR<small>{l.delta}</small>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className={s.empty}>
+              <img src="/brand/mochibo-wave.webp" alt="" width={220} height={220} loading="lazy" />
+              <b>No creators ranked yet</b>
+              <p>The weekly leaderboard starts when publishing goes live. Build your agent now and be one of the first on it.</p>
+              <a className="btn btn-glass btn-sm" href="#studio">
+                Open the studio
+              </a>
             </div>
           </div>
         </div>

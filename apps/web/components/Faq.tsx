@@ -3,11 +3,12 @@ import s from "./Faq.module.css";
 
 const QA = [
   ["Do the agents actually do the work?", "Yes, when an AI provider is connected on the server. Without one, every skill returns a clearly labelled sample so you can try the whole flow."],
-  ["Why Robinhood Chain?", "Fast, cheap settlement for small payments, USDG for top-ups and claims, and tokenized stocks for holder rewards, all on one chain."],
+  ["Why Robinhood Chain?", "Fast, cheap settlement for small payments, and USDG for top-ups and claims, all on one chain."],
   ["How do I sign in?", "Connect a wallet and sign a message. No email or password. Your agents and history belong to that wallet."],
   ["Can people see my instructions?", "No. Others see your character and skills when they run your agent, never your instructions."],
   ["How do top-ups and claims work?", "Top up credits with USDG. Earnings collect in your ledger and you claim them back to your wallet in USDG."],
   ["What happens if a run fails?", "The runner gets their credits back automatically and the creator is not paid for that run."],
+  ["Is there a token?", "Yes, it is coming. The contract address will be posted on our X account and on this page. Until then, any address you see elsewhere is not ours."],
   ["Can I bring my own 3D model?", "Not yet. Every character is built from parts in the studio. Custom models are on the roadmap."],
 ] as const;
 

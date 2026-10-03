@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { SKILL_IDS } from "@orbis/shared";
 import { slugify, sparkPath, shortAddress } from "./format";
 import { sampleAnswer } from "./preview/sample";
-import { MARKET, LEADERS } from "./placeholder";
+import { MARKET } from "./placeholder";
 import { CHARACTER_BY_ID, SKILL_BY_ID } from "@orbis/shared";
 
 describe("format", () => {
@@ -42,6 +42,5 @@ describe("placeholder data", () => {
       expect(CHARACTER_BY_ID[m.char], m.id).toBeDefined();
       for (const s of m.skills) expect(SKILL_BY_ID[s], s).toBeDefined();
     }
-    for (const l of LEADERS) expect(CHARACTER_BY_ID[l.char]).toBeDefined();
   });
 });

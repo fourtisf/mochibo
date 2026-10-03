@@ -96,3 +96,23 @@ Everything below is isolated so the swap stays local.
 2. **Performance on real hardware (Michael).** The 50 fps target and the mid-range Android check need real devices. The test container only has a software GPU. Use Chrome DevTools > Performance on the hero and the studio.
 3. **Low-power threshold.** A 4-core laptop gets low-power mode, including the single hero character. If that turns out too strict, change `isLowPowerDevice()` in `packages/characters/src/quality.ts`.
 4. **pnpm warning.** pnpm warns about an ignored build script (`unrs-resolver`, used by the lint resolver). Lint works without it. Run `pnpm approve-builds` if you want it gone.
+
+## Update: preview honesty pass and brand (after the first deploy)
+
+- **Name.** The site is now Mochibo: `APP_NAME`, `APP_DISPLAY_HOST` and `TOKEN_SYMBOL` in `packages/shared/src/config.ts`.
+- **Brand.** There is a new mascot logo in the nav, favicon, Apple icon and link preview (Open Graph/Twitter) image. Brand files are in `brand/`.
+- **No invented numbers.**
+  - The home metrics show product facts (12 characters, 8 skills, 500 CR max price, 5% fee) until `/stats` exists.
+  - The leaderboard shows an empty state.
+  - Discover cards are labelled "Example" without fake runs or ratings.
+  - The fake incoming runs after publishing were removed.
+- **No unbuilt promises.**
+  - The hero pill now says "Preview is live".
+  - Holders shows fee tiers and the CA ("Coming soon" until `NEXT_PUBLIC_TOKEN_ADDRESS` is set). The hourly stock rewards calculator was removed.
+  - The FAQ no longer mentions stock rewards.
+- **Links.**
+  - X goes to `SOCIAL.x` (nav, footer, FAQ).
+  - Dead footer links (Whitepaper, Telegram, GitHub) were removed.
+  - New pages: `/roadmap`, `/terms` and `/privacy`.
+- **SEO.** Added `robots.txt` (embeds excluded) and `sitemap.xml`.
+- **Open for the owner and Michael:** the Terms and Privacy pages are plain-language preview versions. Have a lawyer review them before paid credits or the token go live.
