@@ -7,6 +7,7 @@ import { authRoutes, sessionAddress } from "./auth";
 import type { Env } from "./env";
 import { toCr } from "./ledger";
 import { runRoutes } from "./runs";
+import { battleRoutes } from "./battles";
 import type { Store } from "./store";
 
 export interface AppDeps {
@@ -69,5 +70,6 @@ export function buildApp({ env, store, db, fetchImpl = fetch, logger = true }: A
   authRoutes(app, env, store, db);
   agentRoutes(app, env, store, db);
   runRoutes(app, env, store, db, fetchImpl);
+  battleRoutes(app, env, store, db, fetchImpl);
   return app;
 }

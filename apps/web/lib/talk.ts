@@ -124,6 +124,7 @@ export class Talker {
   private actor: Actor | null = null;
   private profile: VoiceProfile = { pitch: 1, rate: 1 };
   private subs = new Set<() => void>();
+  private idle: (() => void)[] = [];
   /** The sentence in the bubble, or null when the bubble is hidden. */
   text: string | null = null;
 
@@ -171,6 +172,18 @@ export class Talker {
     this.end();
   }
 
+  /** Resolves when everything pushed so far has been said (or the speech was stopped). */
+  whenIdle(): Promise<void> {
+    if (this.ended && !this.busy && !this.queue.length) return Promise.resolve();
+    return new Promise((r) => this.idle.push(r));
+  }
+
+  private settle() {
+    const waiting = this.idle;
+    this.idle = [];
+    waiting.forEach((r) => r());
+  }
+
   stop() {
     this.gen++;
     clearTimeout(this.timer);
@@ -181,6 +194,7 @@ export class Talker {
     this.ended = true;
     if (this.actor) this.actor.talking = false;
     this.show(null);
+    this.settle();
   }
 
   private show(t: string | null) {
@@ -196,7 +210,10 @@ export class Talker {
     if (next === undefined) {
       if (this.actor) this.actor.talking = false;
       // Keep the last sentence up for a moment, then hide the bubble.
-      if (this.ended) this.timer = setTimeout(() => g === this.gen && this.show(null), 1400);
+      if (this.ended) {
+        this.timer = setTimeout(() => g === this.gen && this.show(null), 1400);
+        this.settle();
+      }
       return;
     }
     clearTimeout(this.timer);
@@ -209,11 +226,12 @@ export class Talker {
       this.pump();
     };
     const readTime = Math.min(6000, Math.max(1400, next.length * 55));
-    if (voiceOn && speechSupported()) {
+    // No English voice on this device (or not loaded yet): show the sentence for a reading time.
+    const v = voiceOn && speechSupported() ? pickVoice() : null;
+    if (v) {
       const u = new SpeechSynthesisUtterance(next);
-      const v = pickVoice();
-      if (v) u.voice = v;
-      u.lang = v?.lang || "en-US";
+      u.voice = v;
+      u.lang = v.lang || "en-US";
       u.pitch = this.profile.pitch;
       u.rate = this.profile.rate;
       u.onend = done;
@@ -242,8 +260,9 @@ export function useTalkerText(t: Talker | null): string | null {
 
 // One talker per stage slot, so the run flow can reach the studio's talker.
 const talkers: Record<string, Talker | null> = {};
-export const talkerFor = (slot: "hero" | "studio") => talkers[slot] ?? null;
-export function registerTalker(slot: "hero" | "studio", t: Talker | null) {
+export type TalkerSlot = "hero" | "studio" | "battle";
+export const talkerFor = (slot: TalkerSlot) => talkers[slot] ?? null;
+export function registerTalker(slot: TalkerSlot, t: Talker | null) {
   talkers[slot]?.stop();
   talkers[slot] = t;
 }

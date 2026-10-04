@@ -4,6 +4,7 @@ import { Bento } from "@/components/Bento";
 import { Studio } from "@/components/studio/Studio";
 import { Discover } from "@/components/Discover";
 import { Creators } from "@/components/Creators";
+import { BattleSection } from "@/components/battle/BattleSection";
 import { Rewards } from "@/components/Rewards";
 import { Faq } from "@/components/Faq";
 import { Final } from "@/components/Final";
@@ -25,6 +26,7 @@ export default function Home() {
         <Bento />
         <Studio />
         <Discover />
+        <BattleSection />
         <Creators />
         <Rewards />
         <Faq />

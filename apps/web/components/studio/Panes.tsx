@@ -385,7 +385,7 @@ export function SkillsPane() {
   );
 }
 
-const LEDGER_LABEL: Record<string, string> = { WELCOME: "Welcome credits", RUN_DEBIT: "Run", REFUND: "Refund", RUN_CREDIT: "Earned", TOPUP: "Top-up" };
+const LEDGER_LABEL: Record<string, string> = { WELCOME: "Welcome credits", RUN_DEBIT: "Run", REFUND: "Refund", RUN_CREDIT: "Earned", TOPUP: "Top-up", BATTLE_DEBIT: "Battle", BATTLE_REFUND: "Battle refund", BATTLE_PRIZE: "Battle prize" };
 
 export function PublishPane({ active }: { active: boolean }) {
   const { agent, setPrice, publish } = usePreview();

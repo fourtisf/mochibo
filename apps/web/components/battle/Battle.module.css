@@ -1,0 +1,190 @@
+.arena {
+  display: grid;
+  gap: 12px;
+}
+.stage {
+  position: relative;
+  height: 420px;
+  overflow: hidden;
+  background: radial-gradient(60% 70% at 50% 80%, rgba(139, 124, 255, 0.2), transparent 70%), radial-gradient(40% 50% at 15% 70%, rgba(255, 143, 184, 0.12), transparent 70%),
+    radial-gradient(40% 50% at 85% 70%, rgba(110, 240, 210, 0.12), transparent 70%);
+}
+.plates {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  pointer-events: none;
+}
+.plate {
+  max-width: 40%;
+  padding: 6px 12px;
+  border-radius: 99px;
+  background: rgba(16, 13, 38, 0.72);
+  border: 1px solid var(--line2);
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.plate.won {
+  border-color: transparent;
+  color: #1a1440;
+  background: linear-gradient(90deg, #ffe27a, #ffb38a);
+}
+.vs {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink2);
+}
+.play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.lines {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.line {
+  max-width: 82%;
+  padding: 10px 14px;
+  border-radius: 16px 16px 16px 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+  font-size: 14.5px;
+  line-height: 1.5;
+  animation: lineIn 0.35s var(--ease);
+}
+.line b {
+  display: block;
+  font-size: 12px;
+  color: var(--ink3);
+  margin-bottom: 2px;
+}
+.line.right {
+  justify-self: end;
+  border-radius: 16px 16px 6px 16px;
+  background: rgba(139, 124, 255, 0.1);
+}
+.line.now {
+  border-color: rgba(110, 240, 210, 0.5);
+}
+.typing span {
+  color: var(--ink3);
+  font-style: italic;
+}
+@keyframes lineIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.arenaFoot {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.vote {
+  padding: 18px;
+  border-radius: 20px;
+  display: grid;
+  gap: 12px;
+}
+.voteHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.voteHead b {
+  font-family: var(--display);
+  font-size: 20px;
+}
+.voteHead span {
+  font-size: 13px;
+  color: var(--ink3);
+}
+.sides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.side {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line2);
+  transition: border-color 0.2s, background 0.2s;
+}
+.side:not(:disabled):hover {
+  border-color: rgba(139, 124, 255, 0.6);
+  background: rgba(139, 124, 255, 0.1);
+}
+.side:disabled {
+  cursor: default;
+}
+.side.mine {
+  border-color: var(--aqua);
+}
+.side.won {
+  border-color: #ffe27a;
+}
+.sideName {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.side small {
+  font-size: 12px;
+  color: var(--ink3);
+}
+.bar {
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--violet), var(--aqua));
+  transition: width 0.4s var(--ease);
+}
+.note {
+  font-size: 12.5px;
+  color: var(--ink3);
+  line-height: 1.5;
+}
+.share {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .stage {
+    height: 340px;
+  }
+  .line {
+    max-width: 92%;
+  }
+}

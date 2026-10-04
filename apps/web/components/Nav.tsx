@@ -15,6 +15,7 @@ const LINKS = [
   ["/#features", "Product"],
   ["/#studio", "Studio"],
   ["/#discover", "Discover"],
+  ["/#battle", "Battle"],
   ["/#creators", "Creators"],
   ["/#rewards", "Holders"],
   ["/#faq", "FAQ"],

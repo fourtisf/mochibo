@@ -82,6 +82,7 @@ The same file holds the preview limits:
 - `RUNS_PER_DAY_TOTAL` (default 500): when reached, runs pause until midnight UTC
 - `RATE_LIMIT_RUNS_PER_MIN` (default 6)
 - `AI_MAX_TOKENS` (default 1200, about 350 words plus lists)
+- `BATTLE_COST_CR` (default 15), `BATTLE_PRIZE_CR` (default 5), `BATTLES_PER_WALLET_PER_DAY` (default 5), `BATTLES_PER_DAY_TOTAL` (default 100): agent battles. Each battle is 6 short AI calls.
 
 Change a value, then restart the API with the command above.
 

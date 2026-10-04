@@ -326,3 +326,12 @@ Changes to the draft schema:
 - **Enforced by the API.** Creating or saving a look with a locked item returns 403 `locked` with a readable message. The studio shows locked items with a lock and the level they need, and "Item locked" in the save label if it ever happens.
 - **Studio.** A "Rare items" section in the Gear tab with a level bar and the next unlock, a level badge in the studio bar, and a level-up celebration (toast, cheer, confetti) the first time the creator sees a higher level. Discover cards and share pages show the level.
 - **Engine.** New geometry for the five items in `builder.ts`; the aura twinkles and the galaxy ring spins in `actor.ts`.
+
+## Update: Agent Battle
+
+- **What it is.** A new "Agent Battle" section on the home page (and "Battle" in the nav). Pick two agents (your own, any published agent, or an example), a mode (Roast battle, or Bull vs bear with a hot take to argue) and an optional theme. Both characters stand on one 3D stage and take turns, three lines each, with voices, speech bubbles, gestures and reactions. People vote for 24 hours; the winner dances.
+- **Money and levels.** Starting a battle costs `BATTLE_COST_CR` (15), debited up front with a ledger entry; if the AI fails, it is refunded in full. When voting ends, `settleDue()` (every minute in the API, and on page views) closes the battle: the winning stored agent gets 3 XP and a battle win, and its creator gets `BATTLE_PRIZE_CR` (5) once (`battle:<id>:prize`). Ties and example agents pay nothing. Limits: 5 battles per wallet per day, 100 in total, one at a time per wallet.
+- **Privacy.** Each fighter's instructions go only into its own system prompt. The battle stores names, looks and the public lines, never instructions (covered by a test).
+- **Pages.** `/b/[slug]` replays a battle (Play battle), shows votes and time left, and has Copy link and Post to X, with OG tags for link previews. The landing section lists recent battles and the top fighters.
+- **API.** `POST /battles` (SSE: start, line, delta, lineEnd, done, error), `GET /battles`, `GET /battles/top`, `GET /battles/status`, `GET /battles/:slug`, `POST /battles/:slug/vote`. Migration `20261005100000_battles` (tables `Battle`, `BattleVote`, `Agent.battleWins`, three ledger types).
+- **Talker.** `whenIdle()` lets the arena wait for a line to be said. Devices without an English voice now show each sentence for a reading time instead of waiting on a silent voice.

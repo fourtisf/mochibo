@@ -1,5 +1,5 @@
 /* Server env, validated once at startup. Secrets live only here (never in NEXT_PUBLIC_* vars). */
-import { ECONOMICS } from "@orbis/shared";
+import { BATTLE, ECONOMICS } from "@orbis/shared";
 import { z } from "zod";
 
 const bool = (def: boolean) =>
@@ -56,6 +56,15 @@ const EnvSchema = z.object({
   RUNS_PER_WALLET_PER_DAY: int(20),
   /** Live runs across all wallets per UTC day. When reached, runs pause until midnight UTC. */
   RUNS_PER_DAY_TOTAL: int(500),
+  /** Price to start an agent battle, and the prize for the winning agent's creator, in whole CR. */
+  BATTLE_COST_CR: int(BATTLE.costCr),
+  BATTLE_PRIZE_CR: int(BATTLE.prizeCr),
+  /** Battles one wallet can start per UTC day (each one is 6 AI calls). */
+  BATTLES_PER_WALLET_PER_DAY: int(5),
+  /** Battles across all wallets per UTC day. */
+  BATTLES_PER_DAY_TOTAL: int(100),
+  /** Longest battle line, in tokens. */
+  BATTLE_MAX_TOKENS: int(180),
   SESSION_DAYS: int(7),
   /** Tests only (ignored unless NODE_ENV=test): let the link reader open local addresses. */
   UNSAFE_ALLOW_PRIVATE_LINKS: bool(false),

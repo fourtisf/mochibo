@@ -45,6 +45,21 @@ enum LedgerType {
   CLAIM_REVERT
   ADMIN_GRANT
   ADJUST
+  BATTLE_DEBIT // starting an agent battle
+  BATTLE_REFUND // a battle that failed to generate
+  BATTLE_PRIZE // the winning agent's creator
+}
+
+enum BattleMode {
+  ROAST
+  DEBATE
+}
+
+enum BattleStatus {
+  RUNNING // the AI is writing it
+  OPEN // finished, voting is open
+  CLOSED // voting ended, winner settled
+  FAILED // refunded
 }
 
 enum DepositStatus {
@@ -73,6 +88,8 @@ model User {
   ledger        LedgerEntry[]
   claims        Claim[]
   ratings       Rating[]
+  battles       Battle[]
+  battleVotes   BattleVote[]
 }
 
 model Agent {
@@ -95,6 +112,7 @@ model Agent {
   runsCount    Int       @default(0)
   // Level points: 1 per other wallet per day that runs it, plus battle wins (packages/shared/src/levels.ts).
   xp           Int       @default(0)
+  battleWins   Int       @default(0)
   earnedTotal  BigInt    @default(0) // centi-credits
   ratingSum    Int       @default(0)
   ratingCount  Int       @default(0)
@@ -145,7 +163,7 @@ model LedgerEntry {
   type           LedgerType
   amount         BigInt // signed centi-credits
   balanceAfter   BigInt
-  refType        String? // "run" | "deposit" | "claim" | "admin"
+  refType        String? // "run" | "battle" | "deposit" | "claim" | "admin"
   refId          String?
   idempotencyKey String     @unique
   memo           String?
@@ -197,4 +215,54 @@ model Rating {
   createdAt DateTime @default(now())
 
   @@index([agentId])
+}
+
+// Two agents battle (a roast, or a debate on a topic); people vote for 24 hours. Fighters are
+// snapshotted (name, look) so the battle page still works if an agent changes or is deleted.
+// Instructions are never stored here: lines are public.
+model Battle {
+  id         String       @id @default(cuid())
+  slug       String       @unique
+  starterId  String
+  starter    User         @relation(fields: [starterId], references: [id], onDelete: Cascade)
+  mode       BattleMode
+  topic      String       @db.VarChar(200)
+  aAgentId   String? // stored agent, or null for an example agent
+  aExampleId String?      @db.VarChar(20)
+  aName      String       @db.VarChar(32)
+  aCharacter Json
+  aSlug      String? // public page of a published agent
+  aBaseId    String       @default("juni") @db.VarChar(20)
+  aThumb     String? // portrait URL of a published agent
+  bAgentId   String?
+  bExampleId String?      @db.VarChar(20)
+  bName      String       @db.VarChar(32)
+  bCharacter Json
+  bSlug      String?
+  bBaseId    String       @default("juni") @db.VarChar(20)
+  bThumb     String? // portrait URL of a published agent
+  lines      Json         @default("[]") // [{ side: "a" | "b", text }]
+  status     BattleStatus @default(RUNNING)
+  cost       BigInt // centi-credits
+  votesA     Int          @default(0)
+  votesB     Int          @default(0)
+  winner     String? // "a", "b" or "tie"
+  endsAt     DateTime?
+  settledAt  DateTime?
+  createdAt  DateTime     @default(now())
+  votes      BattleVote[]
+
+  @@index([status, endsAt])
+  @@index([createdAt])
+}
+
+model BattleVote {
+  battleId  String
+  battle    Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  side      String   @db.VarChar(1)
+  createdAt DateTime @default(now())
+
+  @@id([battleId, userId])
 }

@@ -46,6 +46,8 @@ interface ChatArgs {
   history?: { task: string; answer: string }[];
   webSearch: boolean;
   signal: AbortSignal;
+  /** Overrides AI_MAX_TOKENS (battle lines are short). */
+  maxTokens?: number;
 }
 
 export async function* streamChat(env: Env, args: ChatArgs, fetchImpl: typeof fetch = fetch): AsyncGenerator<ChatEvent> {
@@ -62,7 +64,7 @@ export async function* streamChat(env: Env, args: ChatArgs, fetchImpl: typeof fe
     body: JSON.stringify({
       model,
       stream: true,
-      max_tokens: env.AI_MAX_TOKENS,
+      max_tokens: args.maxTokens ?? env.AI_MAX_TOKENS,
       usage: { include: true },
       messages: [
         { role: "system", content: args.system },

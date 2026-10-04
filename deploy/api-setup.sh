@@ -111,6 +111,11 @@ RATE_LIMIT_RUNS_PER_MIN=6
 RUNS_PER_WALLET_PER_DAY=20
 RUNS_PER_DAY_TOTAL=500
 
+# Agent battles: price to start one, prize for the winner's creator (whole CR), battles per wallet per day
+BATTLE_COST_CR=15
+BATTLE_PRIZE_CR=5
+BATTLES_PER_WALLET_PER_DAY=5
+
 # Robinhood Chain id (from the official docs). Empty accepts sign-in from any chain.
 CHAIN_ID=
 # Optional RPC, only needed to sign in with smart-contract wallets
