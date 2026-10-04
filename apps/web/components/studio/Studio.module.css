@@ -498,4 +498,8 @@
   .conIn select {
     width: 100%;
   }
+  /* The longer signed-out label gets its own row so the task box keeps its width. */
+  .conIn .connectBtn {
+    flex: 1 1 100%;
+  }
 }

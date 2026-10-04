@@ -697,3 +697,30 @@ dialog::backdrop {
     animation: none;
   }
 }
+
+/* example tasks under the task box (components/TryChips.tsx) */
+.try-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  min-width: 0;
+}
+.try-row > span {
+  font-size: 12.5px;
+  color: var(--ink3);
+  margin-right: 2px;
+}
+.try-chip {
+  height: auto;
+  min-height: 30px;
+  max-width: 100%;
+  padding: 5px 11px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

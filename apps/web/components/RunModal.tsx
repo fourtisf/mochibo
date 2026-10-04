@@ -6,6 +6,7 @@ import { authActions, useAuth } from "@/lib/auth";
 import { useRun } from "@/lib/preview/run";
 import { Portrait } from "./Portrait";
 import { RunOutput } from "./RunOutput";
+import { TryChips } from "./TryChips";
 import s from "./Discover.module.css";
 
 export interface RunTarget {
@@ -78,6 +79,7 @@ export function RunModal({ target, onClose }: { target: RunTarget | null; onClos
             <div className="field">
               <div className="lbl">Task</div>
               <textarea className="input" aria-label="Task" placeholder="Describe what you need" value={task} onChange={(e) => setTask(e.target.value)} />
+              <TryChips skillId={skill} onPick={setTask} />
             </div>
             <button
               className="btn btn-primary btn-block"

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { CHARACTERS, CharacterConfigSchema, DEFAULT_CHARACTER, CHIPS, PALETTES } from "./characters";
 import { AgentDraftSchema } from "./agent";
-import { tierForBalance, formatBps, TIERS } from "./config";
+import { tierForBalance, formatBps, TIERS, LIMITS } from "./config";
+import { SKILL_EXAMPLES, SKILL_IDS } from "./skills";
 
 describe("CharacterConfig", () => {
   it("accepts the defaults and all 12 base characters", () => {
@@ -58,5 +59,14 @@ describe("tiers", () => {
   });
   it("formats fees", () => {
     expect(TIERS.map((t) => formatBps(t.feeBps))).toEqual(["5%", "4%", "2.5%", "0%"]);
+  });
+});
+
+describe("skill examples", () => {
+  it("has three runnable examples for every skill", () => {
+    for (const id of SKILL_IDS) {
+      expect(SKILL_EXAMPLES[id]).toHaveLength(3);
+      for (const t of SKILL_EXAMPLES[id]) expect(t.length).toBeLessThanOrEqual(LIMITS.taskMax);
+    }
   });
 });

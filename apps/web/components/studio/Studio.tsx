@@ -1,8 +1,9 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ECONOMICS, MOTIONS, SKILL_BY_ID } from "@orbis/shared";
 import { RunOutput } from "@/components/RunOutput";
+import { TryChips } from "@/components/TryChips";
 import { PowerDock } from "@/components/PowerDock";
 import { clamp } from "@/lib/format";
 import { usePreview } from "@/lib/preview/store";
@@ -171,6 +172,7 @@ function Console() {
   const signedOut = useAuth().status === "unauthenticated";
   const [skill, setSkill] = useState<string>(agent.skills[0] ?? "");
   const [task, setTask] = useState("");
+  const taskRef = useRef<HTMLTextAreaElement>(null);
 
   // Keep the selected skill valid when the equipped list changes.
   useEffect(() => {
@@ -200,6 +202,7 @@ function Console() {
           )}
         </select>
         <textarea
+          ref={taskRef}
           rows={1}
           aria-label="Task"
           placeholder="Ask your agent to do something…"
@@ -212,10 +215,17 @@ function Console() {
             }
           }}
         />
-        <button className="btn btn-primary" onClick={signedOut ? () => authActions.openSignIn() : go} disabled={busy}>
+        <button className={`btn btn-primary${signedOut ? ` ${s.connectBtn}` : ""}`} onClick={signedOut ? () => authActions.openSignIn() : go} disabled={busy}>
           {busy ? "Working…" : signedOut ? "Connect wallet to run" : "Run"}
         </button>
       </div>
+      <TryChips
+        skillId={skill}
+        onPick={(t) => {
+          setTask(t);
+          taskRef.current?.focus();
+        }}
+      />
       <div className={s.conMeta}>
         <span>{ECONOMICS.runCostCr} CR per run in preview</span>
         <span>

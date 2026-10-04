@@ -52,3 +52,47 @@ export const TEMPLATES: readonly Template[] = [
   { name: "Code buddy", text: "Explain code step by step for a non-coder first, then add the technical detail. Flag anything risky.", skills: ["code", "planner", "summary"] },
   { name: "Translator", text: "Translate naturally into the language the user asks for. Keep slang and crypto terms the way people actually say them.", skills: ["translate", "writer"] },
 ];
+
+/** Ready-made tasks shown under the task box, so new users see what each skill can do. */
+export const SKILL_EXAMPLES: Readonly<Record<SkillId, readonly string[]>> = {
+  research: [
+    "What is Robinhood Chain, and what should I check before using it?",
+    "Brief me on tokenized stocks: how they work and the main risks.",
+    "Compare three popular ways to build an AI agent today.",
+  ],
+  writer: [
+    "Write a launch tweet for my AI agent, under 280 characters.",
+    "Write a 4-post X thread announcing a new feature.",
+    "Rewrite this bio so it sounds friendly: I build tools for creators.",
+  ],
+  docqa: [
+    "Text: Refunds are possible within 14 days if the item is unused. Question: Can I return a used item?",
+    "Text: 10% of tokens unlock at launch, the rest monthly over 12 months. Question: How much unlocks at launch?",
+    "Text: The event starts at 6 PM UTC and lasts two hours. Question: When does it end?",
+  ],
+  summary: [
+    "Summarize: Mochibo lets anyone build an AI agent with a 3D body, give it skills, run tasks and earn when others use it.",
+    "Summarize the key steps of a good product launch.",
+    "Summarize the pros and cons of working remotely.",
+  ],
+  translate: [
+    "Translate to Spanish: Welcome to Mochibo, build your first agent today!",
+    "Translate to Japanese: Thank you for joining our community.",
+    "Translate to French: The preview is live, try the studio now.",
+  ],
+  ideas: [
+    "Give me names for a cute AI pet app.",
+    "Ideas for a weekly community event on X.",
+    "Hooks for a short video about AI agents.",
+  ],
+  code: [
+    "Explain this JavaScript: const total = items.reduce((sum, x) => sum + x.price, 0);",
+    "Explain this Solidity line: require(msg.sender == owner, \"Not owner\");",
+    "Explain what this does: SELECT name FROM users WHERE created_at > NOW() - INTERVAL '7 days';",
+  ],
+  planner: [
+    "Plan a 7-day launch for a new app.",
+    "Plan my week to learn basic coding in 30 minutes a day.",
+    "Plan a community giveaway on X, from idea to winner announcement.",
+  ],
+};
