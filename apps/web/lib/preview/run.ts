@@ -54,7 +54,7 @@ export function useRun() {
       const skill = SKILL_BY_ID[skillId];
       if (!task.trim()) return setOut({ kind: "note", text: "Describe the task first, then run it." });
       if (credits < cost) {
-        return setOut({ kind: "note", text: `Not enough credits. This run costs ${cost} CR and you have ${fmt(credits)} CR. Add preview credits from the balance at the top.` });
+        return setOut({ kind: "note", text: `Not enough credits. This run costs ${cost} CR and you have ${fmt(credits)} CR. Top-ups with USDG are coming soon.` });
       }
       // Still inside the click: lets mobile Safari speak the answer when it arrives.
       if (stage) unlockSpeech();

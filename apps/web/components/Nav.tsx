@@ -80,8 +80,8 @@ export function Nav() {
               <span className={s.crDot} />
               <span>{fmt(credits)}</span>&nbsp;CR
             </button>
-            <div className={`${s.pop}${open ? " " + s.open : ""}`} role="dialog" aria-label="Add preview credits">
-              <p>Preview credits are free and have no monetary value. Live top-ups use USDG on Robinhood Chain.</p>
+            <div className={`${s.pop}${open ? " " + s.open : ""}`} role="dialog" aria-label="Credits">
+              <p>You start with free preview credits. They have no monetary value. Top-ups with USDG on Robinhood Chain are coming soon.</p>
               {PUBLIC_ENV.previewCredits && (
                 <div className={s.row}>
                   {TOPUPS.map((v) => (

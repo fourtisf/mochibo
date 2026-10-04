@@ -68,7 +68,7 @@ Env vars used so far, all optional:
 | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | Base URL for share and embed links. Defaults to the current origin. |
 | `NEXT_PUBLIC_TOKEN_ADDRESS` | Shows the token address in Rewards. Empty shows "Coming soon". |
-| `NEXT_PUBLIC_PREVIEW_CREDITS` | Set to `false` to hide the +100 / +500 / +1,000 buttons. |
+| `NEXT_PUBLIC_PREVIEW_CREDITS` | Set to `true` to show free +100 / +500 / +1,000 buttons (local testing only; off by default since October 4, 2026). |
 
 ## Still placeholder (by design, for later phases)
 
