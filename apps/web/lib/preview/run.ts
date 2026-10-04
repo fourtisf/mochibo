@@ -10,6 +10,7 @@ import { SKILL_BY_ID, isSkillId, type PreviewRun } from "@orbis/shared";
 import type { Actor, Stage } from "@orbis/characters";
 import { API_BASE, authActions, getAuth, loadSession } from "../auth";
 import { fmt } from "../format";
+import { talkerFor, unlockSpeech, voiceFor } from "../talk";
 import { usePreview } from "./store";
 
 export type RunOutput =
@@ -55,6 +56,8 @@ export function useRun() {
       if (credits < cost) {
         return setOut({ kind: "note", text: `Not enough credits. This run costs ${cost} CR and you have ${fmt(credits)} CR. Add preview credits from the balance at the top.` });
       }
+      // Still inside the click: lets mobile Safari speak the answer when it arrives.
+      if (stage) unlockSpeech();
       await loadSession();
       if (getAuth().status !== "authenticated") {
         authActions.openSignIn();
@@ -71,14 +74,17 @@ export function useRun() {
         stage.power("scan");
       }
       const note = skill.id === "research" && !WEB_SEARCH ? RESEARCH_NOTE : undefined;
+      // Studio runs: the character reads the answer aloud, sentence by sentence, with a speech bubble.
+      const talker = actor ? talkerFor("studio") : null;
       let charged = false;
       let text = "";
       const finish = (ok: boolean) => {
         setBusy(false);
-        if (actor) {
-          actor.talking = false;
-          if (ok) actor.play("cheer");
-        }
+        if (talker) {
+          if (ok) talker.end();
+          else talker.stop();
+        } else if (actor) actor.talking = false;
+        if (actor && ok) actor.play("nod");
       };
       const fail = (message: string, signIn = false) => {
         if (charged) refund(cost, `Refund: ${label || persona.name} (${skill.name})`);
@@ -119,7 +125,11 @@ export function useRun() {
             if (!line.startsWith("data:")) continue;
             const ev = JSON.parse(line.slice(5)) as { t: "delta"; text: string } | { t: "done" } | { t: "error"; message: string };
             if (ev.t === "delta") {
-              if (!text && actor) actor.talking = true;
+              if (!text && actor) {
+                if (talker) talker.begin(actor, voiceFor(actor.config));
+                else actor.talking = true;
+              }
+              talker?.push(ev.text);
               text += ev.text;
               setOut({ kind: "answer", text, done: false, note });
             } else if (ev.t === "done") {

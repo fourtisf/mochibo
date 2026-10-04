@@ -4,7 +4,6 @@ import {
   CHARACTERS,
   CHIPS,
   ECONOMICS,
-  LANGUAGES,
   LIMITS,
   PALETTES,
   SKILLS,
@@ -264,16 +263,6 @@ export function MindPane() {
           {TONES.map((t) => (
             <button key={t} aria-pressed={agent.tone === t} onClick={() => updateAgent({ tone: t })}>
               {t}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="field">
-        <div className="lbl">Answer language</div>
-        <div className="seg">
-          {LANGUAGES.map((l) => (
-            <button key={l} aria-pressed={agent.lang === l} onClick={() => updateAgent({ lang: l })}>
-              {l}
             </button>
           ))}
         </div>

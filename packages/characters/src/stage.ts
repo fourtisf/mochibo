@@ -52,6 +52,7 @@ export class StageImpl implements Stage, ActorHost {
   private io: IntersectionObserver | null = null;
   private timers = new Set<ReturnType<typeof setTimeout>>();
   private disposed = false;
+  private readonly tmpV = new THREE.Vector3();
   private _w = 0;
   private _h = 0;
 
@@ -238,6 +239,13 @@ export class StageImpl implements Stage, ActorHost {
       }, () => { this.scene.remove(ring, disc); disposeObj(ring); disposeObj(disc); }, a);
     }
     if (k === "hype") { a.play("cheer"); this.burst(new THREE.Vector3(bx, 1.9 * sc, bz), 110, [col, "#FF8FB8", "#FFB38A", "#8B7CFF", "#6EF0D2", "#FFE27A"], 2.7, 2.6); }
+  }
+
+  screenPoint(actor: Actor, height = 1.9): { x: number; y: number } | null {
+    const a = this.actors.find((x) => x === actor);
+    if (!a || !this._w || !this._h) return null;
+    const v = this.tmpV.set(a.base.x + a.mod.x, height * a.scale * a.mod.s + a.mod.y, a.base.z).project(this.camera);
+    return { x: ((v.x + 1) / 2) * this._w, y: ((1 - v.y) / 2) * this._h };
   }
 
   snapshot(type: "image/png" | "image/webp" = "image/png"): string {

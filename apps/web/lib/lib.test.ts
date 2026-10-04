@@ -27,3 +27,15 @@ describe("placeholder data", () => {
     }
   });
 });
+
+describe("talk", () => {
+  it("takes finished sentences from the front and keeps the rest", async () => {
+    const { takeSentences } = await import("./talk");
+    expect(takeSentences("Hi there. Version 3.5 is out! And mo", false)).toEqual({ sentences: ["Hi there.", "Version 3.5 is out!"], rest: " And mo" });
+    expect(takeSentences("Ends with 3.", false).sentences).toEqual([]);
+    expect(takeSentences("- Point one\n- Point two", true).sentences).toEqual(["Point one", "Point two"]);
+    const long = takeSentences(`${"word ".repeat(60)}end.`, true).sentences;
+    expect(long.length).toBeGreaterThan(1);
+    expect(long.every((s) => s.length <= 150)).toBe(true);
+  });
+});

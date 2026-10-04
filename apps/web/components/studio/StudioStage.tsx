@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import type { CharacterConfig } from "@orbis/shared";
 import { createStage, hasWebGL, type Stage } from "@orbis/characters";
 import { useStages } from "@/lib/stages";
+import { Talker, registerTalker } from "@/lib/talk";
+import { SpeechBubble } from "../SpeechBubble";
 
 const WEBGL_MSG = "The 3D preview needs WebGL. Try a recent version of Chrome, Safari or Firefox.";
 
@@ -11,6 +13,7 @@ export default function StudioStage({ config }: { config: CharacterConfig }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<Stage | null>(null);
   const [failed, setFailed] = useState(false);
+  const [talker, setTalker] = useState<Talker | null>(null);
   const stages = useStages();
   const cfgRef = useRef(config);
   cfgRef.current = config;
@@ -31,7 +34,12 @@ export default function StudioStage({ config }: { config: CharacterConfig }) {
     st.addActor(cfgRef.current, { rot: 0.15, main: true });
     stageRef.current = st;
     stages.set("studio", st);
+    // Answers from runs are spoken through this talker (see lib/preview/run.ts).
+    const t = new Talker(st);
+    registerTalker("studio", t);
+    setTalker(t);
     return () => {
+      registerTalker("studio", null);
       stages.set("studio", null);
       st.dispose();
       stageRef.current = null;
@@ -50,6 +58,7 @@ export default function StudioStage({ config }: { config: CharacterConfig }) {
   return (
     <>
       <canvas ref={canvasRef} className="stage-canvas" aria-label="Your agent in 3D. Drag to turn it." />
+      <SpeechBubble talker={talker} minTop={76} />
       {failed && <div className="fallback">{WEBGL_MSG}</div>}
     </>
   );

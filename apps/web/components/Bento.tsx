@@ -158,7 +158,7 @@ export function Bento() {
             </div>
             <div className={s.toneRow}>
               <span className="pill">Friendly</span>
-              <span className="pill">English or Indonesian</span>
+              <span className="pill">English</span>
               <span className="pill">2,000 characters</span>
             </div>
           </div>

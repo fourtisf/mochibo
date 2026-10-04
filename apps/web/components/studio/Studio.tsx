@@ -8,6 +8,7 @@ import { clamp } from "@/lib/format";
 import { usePreview } from "@/lib/preview/store";
 import { useRun } from "@/lib/preview/run";
 import { useStages } from "@/lib/stages";
+import { setVoiceOn, useVoiceOn } from "@/lib/talk";
 import { useToast } from "@/lib/toast";
 import { CharacterPane, GearPane, MindPane, PublishPane, SkillsPane, StylePane } from "./Panes";
 import s from "./Studio.module.css";
@@ -104,6 +105,7 @@ export function Studio() {
                         <path d="M5 12h14" />
                       </svg>
                     </button>
+                    <VoiceToggle />
                     <button className="ibtn" aria-label="Save image" onClick={snap}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                         <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
@@ -145,6 +147,19 @@ export function Studio() {
     a.click();
     toast("Image saved");
   }
+}
+
+/** Voice on/off for talking characters (remembered in this browser). */
+function VoiceToggle() {
+  const on = useVoiceOn();
+  return (
+    <button className="ibtn" aria-label={on ? "Mute voice" : "Turn voice on"} aria-pressed={on} title={on ? "Voice on" : "Voice off"} onClick={() => setVoiceOn(!on)}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+        {on ? <path d="M16 9a4 4 0 0 1 0 6M18.6 6.5a7.5 7.5 0 0 1 0 11" /> : <path d="m16.5 9.5 5 5m0-5-5 5" />}
+      </svg>
+    </button>
+  );
 }
 
 function Console() {

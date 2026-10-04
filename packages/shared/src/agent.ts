@@ -6,7 +6,8 @@ import { SKILL_IDS } from "./skills";
 export const TONES = ["Friendly", "Professional", "Concise"] as const;
 export type Tone = (typeof TONES)[number];
 
-export const LANGUAGES = ["English", "Indonesian"] as const;
+/** Agents answer in English only (owner decision, October 2026). Kept as a list so more languages can be added later. */
+export const LANGUAGES = ["English"] as const;
 export type Language = (typeof LANGUAGES)[number];
 
 export const AgentNameSchema = z.string().trim().min(1).max(LIMITS.nameMax);

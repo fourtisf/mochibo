@@ -184,3 +184,36 @@ Fastify 5 on Node 22, bundled to `dist/server.cjs` with esbuild.
 - The OpenRouter key and model are set by the owner in `/home/mochibo/api.env` (see `deploy/README.md`).
 - OpenRouter could not be reached from the build sandbox, so the first real call happens on the VPS.
 - Discover example agents use their description as instructions until real agents are stored (next phase 2 step: Postgres, agent CRUD and `{ agentId }` runs).
+
+## Update: talking characters, English only, 100 starting credits
+
+**Owner decisions (October 4, 2026)**
+- Characters talk, and their words show in a speech bubble.
+- English only: the Indonesian option and every Indonesian example were removed. `LANGUAGES` is now `["English"]`, so the studio's language field is gone.
+- Visitors start with 100 preview credits (`ECONOMICS.previewStartCr`).
+
+**Talking (`apps/web/lib/talk.ts`)**
+- One `Talker` per stage splits text into sentences:
+  - "3.5" and "e.g" do not end a sentence.
+  - Bullets and markdown are removed.
+  - Long sentences are cut at about 150 characters.
+- Each sentence:
+  - shows in a bubble (`components/SpeechBubble.tsx`) that follows the head through the new engine method `stage.screenPoint(actor)`
+  - opens the mouth (`actor.talking`)
+  - is read aloud with the browser's built-in Web Speech API: free, no new service, nothing leaves the device
+- Voice:
+  - Each character has a steady voice: bots are higher and a little faster, humans vary by look.
+  - With voice off, or no English voice on the device, each sentence stays up for a reading time.
+  - The speaker button in the studio tools turns voice off; the choice is saved in this browser.
+  - Only one stage speaks at a time.
+- **Studio:** live answers are spoken while they stream in.
+- **Hero:** tapping a character makes it introduce itself, with a new line on each tap.
+- **Mobile Safari:** it only allows speech that starts inside a tap, so the Run click "unlocks" speech first.
+
+**Copy changes**
+- Discover: "Bahasa Bridge" became "Lingo Bridge" (Spanish, French, Japanese and more).
+- The "Bahasa bridge" template became "Translator".
+- The Bento pill now reads "English".
+- The hero task card says "English to Spanish".
+- `brand/x-article.md` no longer lists an answer language.
+- The brief (CLAUDE.md, section 1) still says "English, Indonesian". That brief text is the owner's to update.

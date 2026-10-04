@@ -48,6 +48,12 @@ export interface Stage {
   /** Remove all actors and end running effects. */
   clear(): void;
   power(name: PowerName): void;
+  /**
+   * Where a point above an actor appears on the canvas, in CSS pixels from the canvas's top-left
+   * corner (for speech bubbles). `height` is in world units at scale 1; 1.9 is just above the head.
+   * Returns null before the first frame or for an actor that is not on this stage.
+   */
+  screenPoint(actor: Actor, height?: number): { x: number; y: number } | null;
   /** Render a frame and return it as a data URL. */
   snapshot(type?: "image/png" | "image/webp"): string;
   dispose(): void;

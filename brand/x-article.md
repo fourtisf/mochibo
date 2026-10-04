@@ -35,7 +35,6 @@ A body needs a brain. Give your agent:
 - A name (up to 32 characters)
 - Instructions that tell it how to work (up to 2,000 characters)
 - A tone: Friendly, Professional or Concise
-- An answer language: English or Indonesian
 
 Your instructions stay private. Other people can run your agent, but they never see the instructions behind it.
 

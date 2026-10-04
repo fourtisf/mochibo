@@ -50,5 +50,5 @@ export const TEMPLATES: readonly Template[] = [
   { name: "Research companion", text: "Research carefully. Separate facts from opinions, say how sure you are, and end with what to verify.", skills: ["research", "summary", "docqa"] },
   { name: "Content co-pilot", text: "Write in short, clear sentences. Offer two versions when tone matters. Never invent quotes or numbers.", skills: ["writer", "ideas", "summary"] },
   { name: "Code buddy", text: "Explain code step by step for a non-coder first, then add the technical detail. Flag anything risky.", skills: ["code", "planner", "summary"] },
-  { name: "Bahasa bridge", text: "Translate naturally between English and Indonesian. Keep slang and crypto terms the way people actually say them.", skills: ["translate", "writer"] },
+  { name: "Translator", text: "Translate naturally into the language the user asks for. Keep slang and crypto terms the way people actually say them.", skills: ["translate", "writer"] },
 ];
