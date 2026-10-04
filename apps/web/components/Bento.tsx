@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { CATEGORY_COLOR, CHARACTER_BY_ID, POWERS, SKILLS, type CharacterConfig } from "@orbis/shared";
+import { CATEGORY_COLOR, CHARACTER_BY_ID, POWERS, SKILLS, type CharacterConfig, APP_DISPLAY_HOST } from "@orbis/shared";
 import { BENTO_EARN } from "@/lib/placeholder";
 import { PowerIcon } from "@/lib/icons";
 import { fullBodyUrl } from "@/lib/images";
@@ -198,16 +198,22 @@ export function Bento() {
             <h3>Share it as a link or put it on any page</h3>
             <p>Share your agent with one link. Drop a live preview into a site with one line of code.</p>
             <div className={s.sharePill}>
-              <span>{shareShort}</span>
-              <button
-                className="btn btn-glass btn-xs"
-                onClick={async () => {
-                  await copyText(shareLink);
-                  toast("Copied");
-                }}
-              >
-                Copy link
-              </button>
+              <span>{shareShort || `${APP_DISPLAY_HOST}/a/your-agent`}</span>
+              {shareLink ? (
+                <button
+                  className="btn btn-glass btn-xs"
+                  onClick={async () => {
+                    await copyText(shareLink);
+                    toast("Copied");
+                  }}
+                >
+                  Copy link
+                </button>
+              ) : (
+                <a className="btn btn-glass btn-xs" href="#studio">
+                  Build yours
+                </a>
+              )}
             </div>
           </div>
 

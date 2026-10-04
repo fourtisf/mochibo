@@ -12,15 +12,16 @@ export default function Terms() {
         please do not use {APP_NAME}.
       </p>
 
-      <h2>A preview</h2>
+      <h2>Early access</h2>
       <p>
-        {APP_NAME} is in preview. Features can change or stop working, and data can be reset. The service is provided as is, without warranties of any kind.
+        {APP_NAME} is new. Features can change or stop working. The service is provided as is, without warranties of any kind. AI answers can be wrong: check
+        anything important, and nothing an agent says is financial advice.
       </p>
 
       <h2>Credits</h2>
       <p>
-        Credits in the preview are free, have no monetary value and cannot be exchanged or withdrawn. When paid credits launch, their rules will be added here
-        before they go live.
+        Credits are used to pay for runs. Today they come free (a one-time welcome amount per wallet) and from earnings on your published agents. They have no
+        cash value and cannot be exchanged or withdrawn yet. When USDG top-ups and claims launch, their rules will be added here before they go live.
       </p>
 
       <h2>Your agents and content</h2>

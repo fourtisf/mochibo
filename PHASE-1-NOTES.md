@@ -282,3 +282,18 @@ Changes to the draft schema:
   - Every "connect wallet" button runs the same flow: connect, then sign.
 - **API.** The API accepts the `www.` twin of `APP_URL` for SIWE domains and write Origins. Nginx serves both hosts, and requests from www were rejected with 403 before.
 - **Cleanup.** Two test screenshots committed by mistake in the talking-characters commit were removed, and `/*.png` at the repo root is now ignored.
+
+## Update: live product (saved agents, publishing, creator earnings, ops)
+
+- **Saved agents.** Signed in, the studio loads the wallet's agents (`GET /agents/mine`) and autosaves every change after 700 ms (`PATCH /agents/:id`), with "Saving…" then "Saved". The agent switcher in the studio bar lists "My agents", makes a new one (max 20) or deletes one (soft delete). A draft changed before sign-in is saved as a new agent at sign-in.
+- **Publishing.** "Publish to Discover" saves, publishes with the price, renders the portrait once in the browser and uploads it (`POST /agents/:id/thumbnail`). Share and embed links appear only once the agent is published, and carry only the slug.
+- **Discover** lists published agents from `GET /discover` (newest first, categories from skills) above the example agents. Your own agents show "Yours" and cost a studio run to test.
+- **Share page** `/a/[slug]` is server-rendered with OG and Twitter tags (portrait, name, skills, price). It never contains the instructions. **Embed** `/embed/[slug]` works for published agents and the 12 base characters.
+- **Runs of published agents** cost the agent's price. On success the creator is credited the price minus the 5% fee (`RUN_CREDIT`); the agent's runs and earnings go up. Failed runs refund the runner and pay nothing. Runners can rate a finished run 1 to 5 stars, once.
+- **Chat.** Answers are kept as a short chat. Follow-ups send the last 3 turns with the next run. "New chat" clears it. Each answer has Copy and Post to X.
+- **Links.** A task with up to 2 links reads those pages first (public addresses only, checked at connect time and on every redirect; 1 MB, 8 s). X links are refused, since they need a login.
+- **Landing data.** Metrics read `GET /stats` once agents are published (product facts before that), the hero earnings card shows real recent payouts, and the leaderboard reads `GET /leaderboard` (this week's creator earnings, cached 5 minutes). The "preview" labels are gone.
+- **Ops.** Daily backups (14 days), a 5-minute health check that restarts a dead API, portraits served by Nginx from `/var/www/mochibo-uploads`, and security headers with the content policy in report-only mode. See `deploy/README.md`.
+- **Verified** with `pnpm check` (typecheck, lint, 57 tests including 33 API tests against PostgreSQL) and a two-wallet browser test against the built app with a stand-in AI server: save, rename, reload, publish, share page without instructions, run by a second wallet (100 to 88 to 76 CR), follow-up with history, 5-star rating, creator credited 11.4 CR per run, leaderboard row, embed with `frame-ancestors *`, no console errors, and no horizontal scroll at 390 px.
+- **Still needs the owner:** USDG top-ups and claims (Robinhood Chain id, RPC, USDG address, a multisig, an audit), the ORBIS token address for holder tiers, and a legal review of Terms and Privacy.
+

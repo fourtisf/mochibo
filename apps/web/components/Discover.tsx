@@ -1,57 +1,110 @@
 "use client";
-import { useMemo, useRef, useState } from "react";
-import { CATEGORY_COLOR, CHARACTER_BY_ID, ECONOMICS, SKILL_BY_ID, formatBps, type SkillCategory, type SkillId } from "@orbis/shared";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  CATEGORY_COLOR,
+  CHARACTER_BY_ID,
+  ECONOMICS,
+  SKILL_BY_ID,
+  formatBps,
+  normalizeCharacter,
+  type PublicAgent,
+  type SkillCategory,
+  type SkillId,
+} from "@orbis/shared";
 import { MARKET } from "@/lib/placeholder";
 import { portraitUrl } from "@/lib/images";
 import { StarIcon } from "@/lib/icons";
-import { fmt } from "@/lib/format";
+import { fmt, shortAddress } from "@/lib/format";
 import { usePreview } from "@/lib/preview/store";
 import { Portrait } from "./Portrait";
-import { authActions, useAuth } from "@/lib/auth";
+import { api, authActions, useAuth } from "@/lib/auth";
 import { RunModal, type RunTarget } from "./RunModal";
 import s from "./Discover.module.css";
 
 interface Card {
-  id: string;
+  key: string;
   name: string;
   by: string;
   thumb: string;
   glow: string;
-  cat?: SkillCategory;
+  cats: SkillCategory[];
   desc: string;
   skills: SkillId[];
   price: number;
   runs: number;
-  rating: number;
-  mine?: boolean;
+  rating: number | null;
+  mine: boolean;
+  /** Published agent id (real agents) or example id. */
+  agentId?: string;
+  exampleId?: string;
+}
+
+const catsOf = (skills: SkillId[]) => Array.from(new Set(skills.map((id) => SKILL_BY_ID[id].cat)));
+
+/** Published agents from the API (GET /discover). Refetches when the visitor publishes or unpublishes. */
+function usePublished(refreshKey: string) {
+  const [agents, setAgents] = useState<PublicAgent[]>([]);
+  useEffect(() => {
+    let live = true;
+    api<{ agents: PublicAgent[] }>("/discover")
+      .then((r) => live && setAgents(r.agents))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [refreshKey]);
+  return agents;
 }
 
 export function Discover() {
-  const { agent } = usePreview();
+  const { agents: mine } = usePreview();
+  const auth = useAuth();
   const [filter, setFilter] = useState<string>("All");
   const [target, setTarget] = useState<RunTarget | null>(null);
   const openKey = useRef(0);
+  const published = usePublished(mine.filter((a) => a.published).map((a) => `${a.id}:${a.price}`).join(","));
 
-  const cats = useMemo(() => ["All", ...Array.from(new Set(MARKET.map((m) => m.cat)))], []);
-  const list: Card[] = [];
-  if (agent.published) {
-    list.push({
-      id: "mine",
-      name: agent.name,
-      by: "you",
-      thumb: agent.thumb,
-      glow: agent.cfg.glow,
-      desc: "Your published agent. Others see the character and skills, not your instructions.",
-      skills: agent.skills,
-      price: agent.price,
-      runs: agent.runs,
-      rating: 5,
-      mine: true,
+  const list: Card[] = useMemo(() => {
+    const real: Card[] = published.map((a) => {
+      const cfg = normalizeCharacter(a.character);
+      const isMine = a.creator === auth.address;
+      return {
+        key: a.id,
+        name: a.name,
+        by: isMine ? "by you" : `by ${shortAddress(a.creator)}`,
+        thumb: a.thumbnailUrl || portraitUrl(CHARACTER_BY_ID[a.baseId] ? a.baseId : "juni"),
+        glow: cfg.glow,
+        cats: catsOf(a.skills),
+        desc: a.skills.map((id) => SKILL_BY_ID[id].desc).join(" "),
+        skills: a.skills,
+        price: isMine ? ECONOMICS.runCostCr : a.price,
+        runs: a.runsCount,
+        rating: a.rating,
+        mine: isMine,
+        agentId: a.id,
+      };
     });
-  }
-  for (const m of MARKET) list.push({ ...m, thumb: portraitUrl(m.char), glow: CHARACTER_BY_ID[m.char].config.glow });
+    const examples: Card[] = MARKET.map((m) => ({
+      key: m.id,
+      name: m.name,
+      by: `Example agent · ${m.by}`,
+      thumb: portraitUrl(m.char),
+      glow: CHARACTER_BY_ID[m.char].config.glow,
+      cats: [m.cat],
+      desc: m.desc,
+      skills: m.skills,
+      price: m.price,
+      runs: 0,
+      rating: null,
+      mine: false,
+      exampleId: m.id,
+    }));
+    return [...real, ...examples];
+  }, [published, auth.address]);
 
-  const signedOut = useAuth().status === "unauthenticated";
+  const cats = useMemo(() => ["All", ...Array.from(new Set(list.flatMap((c) => c.cats)))], [list]);
+  const signedOut = auth.status === "unauthenticated";
+
   const open = (c: Card) => {
     // Runs are paid with a wallet's credits: connect first.
     if (signedOut) {
@@ -59,11 +112,20 @@ export function Discover() {
       return;
     }
     openKey.current++;
-    setTarget(
-      c.mine
-        ? { key: openKey.current, name: agent.name, desc: "Testing your own agent costs the same as a studio run.", skills: agent.skills, price: ECONOMICS.runCostCr, thumb: agent.thumb, glow: agent.cfg.glow, lang: agent.lang, tone: agent.tone, instructions: agent.instructions }
-        : { key: openKey.current, name: c.name, desc: c.desc, skills: c.skills, price: c.price, thumb: c.thumb, glow: c.glow, lang: "English", tone: "Friendly", instructions: c.desc, exampleId: c.id },
-    );
+    setTarget({
+      key: openKey.current,
+      name: c.name,
+      desc: c.mine ? `Testing your own agent costs the same as a studio run (${ECONOMICS.runCostCr} CR).` : c.desc,
+      skills: c.skills,
+      price: c.price,
+      thumb: c.thumb,
+      glow: c.glow,
+      lang: "English",
+      tone: "Friendly",
+      instructions: c.desc,
+      agentId: c.agentId,
+      exampleId: c.exampleId,
+    });
   };
 
   return (
@@ -73,7 +135,7 @@ export function Discover() {
           <div className="head">
             <h2>Agents you can run today.</h2>
             <p>
-              Example agents for the preview. Pay per run in credits. Creators keep the price minus a {formatBps(ECONOMICS.platformFeeBps)} fee.
+              Run agents made by creators, or try the examples. Pay per run in credits. Creators keep the price minus a {formatBps(ECONOMICS.platformFeeBps)} fee.
             </p>
           </div>
           <div className={`seg ${s.filters}`}>
@@ -86,25 +148,25 @@ export function Discover() {
         </div>
         <div className={s.agents}>
           {list
-            .filter((m) => filter === "All" || m.cat === filter || m.mine)
+            .filter((m) => filter === "All" || m.cats.includes(filter as SkillCategory))
             .map((m) => (
-              <article className={s.ag} key={m.id}>
+              <article className={s.ag} key={m.key}>
                 <Portrait src={m.thumb} glow={m.glow}>
                   {m.mine && <span className={s.yours}>Yours</span>}
-                  {m.mine ? (
-                    m.runs > 0 && (
+                  {m.exampleId ? (
+                    <span className={s.rating}>Example</span>
+                  ) : (
+                    m.rating !== null && (
                       <span className={s.rating}>
                         <StarIcon />
                         {m.rating.toFixed(1)}
                       </span>
                     )
-                  ) : (
-                    <span className={s.rating}>Example</span>
                   )}
                 </Portrait>
                 <div className={s.b}>
                   <h3>{m.name}</h3>
-                  <div className={s.by}>{m.mine ? "by you" : `Example agent · ${m.by}`}</div>
+                  <div className={s.by}>{m.by}</div>
                   <p>{m.desc}</p>
                   <div className={s.tags}>
                     {m.skills.map((id) => (
@@ -116,7 +178,7 @@ export function Discover() {
                   </div>
                   <div className={s.f}>
                     <div className={s.price}>
-                      {m.price} CR<small>{m.mine ? `${fmt(m.runs)} runs` : "per run"}</small>
+                      {m.price} CR<small>{m.agentId ? `per run · ${fmt(m.runs)} runs` : "per run"}</small>
                     </div>
                     <button className={`btn ${m.mine ? "btn-glass" : "btn-primary"} btn-sm`} onClick={() => open(m)}>
                       {m.mine ? "Test it" : "Run"}

@@ -4,7 +4,7 @@
  * Instructions never leave this server except to their owner (GET /agents/mine) and the AI provider.
  */
 import { randomBytes } from "node:crypto";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { Agent, Prisma, PrismaClient, Tone as DbTone } from "@prisma/client";
@@ -195,6 +195,19 @@ export function agentRoutes(app: FastifyInstance, env: Env, store: Store, db: Pr
     const agent = await db.agent.update({ where: { id: found.agent.id }, data: { thumbnailUrl: `/uploads/${name}` } });
     if (old?.startsWith("/uploads/")) await unlink(path.join(env.UPLOAD_DIR, path.basename(old))).catch(() => undefined);
     return { agent: ownView(agent) };
+  });
+
+  // Portraits. In production Nginx serves /uploads straight from disk; this is the fallback for development.
+  app.get("/uploads/:name", async (req, reply) => {
+    const { name } = req.params as { name: string };
+    if (!/^[0-9a-f]{32}\.(png|webp)$/.test(name)) return reply.code(404).send();
+    const buf = await readFile(path.join(env.UPLOAD_DIR, name)).catch(() => null);
+    if (!buf) return reply.code(404).send();
+    return reply
+      .header("Content-Type", name.endsWith(".png") ? "image/png" : "image/webp")
+      .header("Cache-Control", "public, max-age=31536000, immutable")
+      .header("X-Content-Type-Options", "nosniff")
+      .send(buf);
   });
 
   app.get("/discover", async (req) => {

@@ -93,6 +93,7 @@
   padding: 0 14px;
   border-radius: 12px;
   font-weight: 600;
+  white-space: nowrap;
 }
 .crDot {
   width: 16px;
@@ -138,6 +139,8 @@
 @media (max-width: 600px) {
   .creditsBtn {
     padding: 0 10px;
+    gap: 6px;
+    font-size: 13px;
   }
   .social {
     width: 36px;

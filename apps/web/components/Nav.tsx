@@ -12,12 +12,12 @@ import s from "./Nav.module.css";
 const WalletButton = dynamic(() => import("./wallet/WalletButton"), { ssr: false, loading: () => <WalletPlaceholder /> });
 
 const LINKS = [
-  ["#features", "Product"],
-  ["#studio", "Studio"],
-  ["#discover", "Discover"],
-  ["#creators", "Creators"],
-  ["#rewards", "Holders"],
-  ["#faq", "FAQ"],
+  ["/#features", "Product"],
+  ["/#studio", "Studio"],
+  ["/#discover", "Discover"],
+  ["/#creators", "Creators"],
+  ["/#rewards", "Holders"],
+  ["/#faq", "FAQ"],
 ] as const;
 
 export function Nav() {
@@ -49,7 +49,7 @@ export function Nav() {
   return (
     <header className={s.navWrap}>
       <nav className={s.nav} aria-label="Main">
-        <a className="logo" href="#top" aria-label={`${APP_NAME} home`}>
+        <a className="logo" href="/#top" aria-label={`${APP_NAME} home`}>
           <img src="/brand/mochibo-head.png" alt="" width={30} height={30} className={s.logoImg} />
           {APP_NAME}
         </a>

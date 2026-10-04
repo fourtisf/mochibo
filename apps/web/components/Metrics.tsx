@@ -2,12 +2,10 @@
 import { useEffect, useRef } from "react";
 import { CHARACTERS, ECONOMICS, LIMITS, SKILLS, formatBps } from "@orbis/shared";
 import { countUp } from "@/lib/countup";
+import { useStats } from "@/lib/stats";
 import s from "./Hero.module.css";
 
-/**
- * Product facts while there is no real usage yet. Phase 3 swaps these for live numbers
- * from GET /stats (agents built, runs, paid to creators).
- */
+/** Live numbers from GET /stats once the first agents are published; product facts before that. */
 const FACTS = [
   { value: CHARACTERS.length, label: "characters to start from" },
   { value: SKILLS.length, label: "working skills to equip" },
@@ -16,6 +14,16 @@ const FACTS = [
 ];
 
 export function Metrics() {
+  const stats = useStats();
+  const live = Boolean(stats && stats.agents > 0);
+  const items = live
+    ? [
+        { value: stats!.agents, label: "agents published", suffix: "" },
+        { value: stats!.runs, label: "tasks run by agents", suffix: "" },
+        { value: Math.round(stats!.paidToCreators), label: "CR paid to creators", suffix: "" },
+        { value: CHARACTERS.length, label: "characters to start from", suffix: "" },
+      ]
+    : FACTS;
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const els = Array.from(ref.current?.querySelectorAll<HTMLElement>("[data-count]") ?? []);
@@ -35,12 +43,12 @@ export function Metrics() {
       obs.disconnect();
       stops.forEach((f) => f());
     };
-  }, []);
+  }, [live]);
 
   return (
     <>
-      <div className={s.metrics} ref={ref}>
-        {FACTS.map((m) => (
+      <div className={s.metrics} ref={ref} key={live ? "live" : "facts"}>
+        {items.map((m) => (
           <div className={s.metric} key={m.label}>
             <b data-count={m.value} data-suffix={m.suffix || ""}>
               0
@@ -49,7 +57,7 @@ export function Metrics() {
           </div>
         ))}
       </div>
-      <div className={s.metricsNote}>Live usage stats appear here once publishing opens</div>
+      <div className={s.metricsNote}>{live ? "Live numbers from Mochibo" : "Live numbers appear here as soon as the first agents are published"}</div>
     </>
   );
 }

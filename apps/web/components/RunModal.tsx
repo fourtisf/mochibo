@@ -21,16 +21,22 @@ export interface RunTarget {
   tone: Tone;
   /** Sent to our API with the run, never shown to other people. */
   instructions: string;
-  /** Example agents are priced and described by the server; without it this is your own agent. */
+  /** A published (or your own saved) agent: priced and run from its stored settings. */
+  agentId?: string;
+  /** Example agents are priced and described by the server. Without either id this is your studio agent. */
   exampleId?: string;
 }
 
 export function RunModal({ target, onClose }: { target: RunTarget | null; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
-  const { out, busy, run, reset } = useRun();
+  const { out, turns, busy, run, reset } = useRun();
   const signedOut = useAuth().status === "unauthenticated";
   const [skill, setSkill] = useState("");
   const [task, setTask] = useState("");
+
+  useEffect(() => {
+    if (turns.length) setTask("");
+  }, [turns.length]);
 
   useEffect(() => {
     const d = ref.current;
@@ -78,7 +84,7 @@ export function RunModal({ target, onClose }: { target: RunTarget | null; onClos
             </div>
             <div className="field">
               <div className="lbl">Task</div>
-              <textarea className="input" aria-label="Task" placeholder="Describe what you need" value={task} onChange={(e) => setTask(e.target.value)} />
+              <textarea className="input" aria-label="Task" placeholder={turns.length ? "Ask a follow-up" : "Describe what you need"} value={task} onChange={(e) => setTask(e.target.value)} />
               <TryChips skillId={skill} onPick={setTask} />
             </div>
             <button
@@ -94,15 +100,17 @@ export function RunModal({ target, onClose }: { target: RunTarget | null; onClos
                 run({
                   skillId: skill,
                   task,
-                  source: target.exampleId
-                    ? { kind: "example", id: target.exampleId }
-                    : { kind: "studio", persona: { name: target.name, instructions: target.instructions, tone: target.tone, lang: target.lang, skills: target.skills } },
+                  source: target.agentId
+                    ? { kind: "agent", id: target.agentId }
+                    : target.exampleId
+                      ? { kind: "example", id: target.exampleId }
+                      : { kind: "studio", persona: { name: target.name, instructions: target.instructions, tone: target.tone, lang: target.lang, skills: target.skills } },
                 });
               }}
             >
               {busy ? "Working…" : signedOut ? "Connect wallet to run" : target.price ? `Run for ${target.price} CR` : "Run for free"}
             </button>
-            <RunOutput out={out} style={{ maxHeight: 260 }} />
+            <RunOutput out={out} turns={turns} onNewChat={reset} style={{ maxHeight: 300 }} />
           </div>
         </>
       )}

@@ -21,7 +21,7 @@ import { fmt, rnd } from "@/lib/format";
 import { copyText } from "@/lib/hooks";
 import { usePreview } from "@/lib/preview/store";
 import { useAccount } from "@/lib/account";
-import { useAuth } from "@/lib/auth";
+import { authActions, useAuth } from "@/lib/auth";
 import { useShareLinks } from "@/lib/share";
 import { useStages } from "@/lib/stages";
 import { useToast } from "@/lib/toast";
@@ -330,7 +330,8 @@ export function SkillsPane() {
 const LEDGER_LABEL: Record<string, string> = { WELCOME: "Welcome credits", RUN_DEBIT: "Run", REFUND: "Refund", RUN_CREDIT: "Earned", TOPUP: "Top-up" };
 
 export function PublishPane({ active }: { active: boolean }) {
-  const { agent, updateAgent, setPublished } = usePreview();
+  const { agent, setPrice, publish } = usePreview();
+  const [busy, setBusy] = useState(false);
   const { ledger } = useAccount();
   const { status } = useAuth();
   const { shareLink, embedCode } = useShareLinks();
@@ -355,17 +356,17 @@ export function PublishPane({ active }: { active: boolean }) {
   }, [active, agent.cfg, agent.published, agent.thumb]);
 
   const togglePublish = async () => {
-    if (!agent.published && !agent.skills.length) return toast("Equip at least one skill before publishing.");
-    if (agent.published) {
-      setPublished(false);
-      toast("Unpublished");
+    if (status !== "authenticated") {
+      authActions.openSignIn();
       return;
     }
-    // Phase 2: POST /agents/:id/publish, then upload this portrait to /agents/:id/thumbnail.
-    const e = await loadEngine();
-    setPublished(true, e.renderThumbnail(agent.cfg));
-    toast("Published to Discover");
-    stages.get("studio")?.power("hype");
+    const goingLive = !agent.published;
+    setBusy(true);
+    const err = await publish(goingLive);
+    setBusy(false);
+    if (err) return toast(err);
+    toast(goingLive ? "Published to Discover" : "Unpublished");
+    if (goingLive) stages.get("studio")?.power("hype");
   };
 
   const thumb = agent.published && agent.thumb ? agent.thumb : liveThumb;
@@ -393,11 +394,11 @@ export function PublishPane({ active }: { active: boolean }) {
           min={LIMITS.priceMin}
           max={LIMITS.priceMax}
           value={agent.price}
-          onChange={(e) => updateAgent({ price: +e.target.value }, { dirty: false })}
+          onChange={(e) => setPrice(+e.target.value)}
         />
       </div>
-      <button className={`btn ${agent.published ? "btn-glass" : "btn-primary"} btn-block`} onClick={togglePublish}>
-        {agent.published ? "Unpublish" : "Publish to Discover"}
+      <button className={`btn ${agent.published ? "btn-glass" : "btn-primary"} btn-block`} onClick={togglePublish} disabled={busy}>
+        {busy ? "Working…" : status !== "authenticated" ? "Connect wallet to publish" : agent.published ? "Unpublish" : "Publish to Discover"}
       </button>
       <div className={s.stats}>
         <div className={s.stat}>
@@ -409,10 +410,16 @@ export function PublishPane({ active }: { active: boolean }) {
           <b>{fmt(agent.earned)}</b>
         </div>
         <div className={s.stat}>
-          <small>Fee</small>
-          <b>{formatBps(ECONOMICS.platformFeeBps)}</b>
+          <small>Rating</small>
+          <b>{agent.rating ? `${agent.rating.toFixed(1)}★` : "–"}</b>
         </div>
       </div>
+      <p className={s.note}>
+        You earn the price minus a {formatBps(ECONOMICS.platformFeeBps)} fee on every run by someone else. Running your own agent costs {ECONOMICS.runCostCr} CR.
+      </p>
+      {!shareLink && <p className={s.note}>Publish to get a share link and an embed code.</p>}
+      {shareLink && (
+        <>
       <div className="field">
         <div className="lbl">Share link</div>
         <div className={s.copyrow}>
@@ -443,6 +450,8 @@ export function PublishPane({ active }: { active: boolean }) {
           </button>
         </div>
       </div>
+        </>
+      )}
       <div className="lbl">Ledger</div>
       <ul className={s.ledger}>
         {ledger.length ? (

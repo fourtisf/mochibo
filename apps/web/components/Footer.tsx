@@ -33,7 +33,7 @@ export function Footer() {
           ))}
         </div>
         <div className={s.bottom}>
-          <span>{APP_NAME} preview build. Credits have no monetary value.</span>
+          <span>Early access. Credits have no cash value until USDG top-ups and claims launch.</span>
           <span className={s.legal}>
             <a href="/terms">Terms</a>
             <a href="/privacy">Privacy</a>

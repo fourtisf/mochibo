@@ -1,3 +1,9 @@
+"use client";
+import { CHARACTER_BY_ID } from "@orbis/shared";
+import { fmt, shortAddress } from "@/lib/format";
+import { portraitUrl } from "@/lib/images";
+import { useLeaderboard } from "@/lib/stats";
+import { Portrait } from "./Portrait";
 import s from "./Creators.module.css";
 
 const STEPS = [
@@ -8,6 +14,8 @@ const STEPS = [
 ] as const;
 
 export function Creators() {
+  const board = useLeaderboard();
+  const creators = board?.creators ?? [];
   return (
     <section id="creators">
       <div className="wrap">
@@ -32,16 +40,38 @@ export function Creators() {
           <div className={s.board}>
             <div className={s.boardH}>
               <h3>Top creators this week</h3>
-              <span className="pill">Opens with publishing</span>
+              <span className="pill">Last 7 days</span>
             </div>
-            <div className={s.empty}>
+            {creators.length > 0 ? (
+              <div>
+                {creators.map((c, i) => {
+                  const base = c.topAgent && CHARACTER_BY_ID[c.topAgent.baseId] ? c.topAgent.baseId : "juni";
+                  return (
+                    <a className={s.lrow} key={c.wallet} href={c.topAgent ? `/a/${c.topAgent.slug}` : "#discover"}>
+                      <span className={s.rk}>{i + 1}</span>
+                      <Portrait src={c.topAgent?.thumbnailUrl || portraitUrl(base)} glow={CHARACTER_BY_ID[base].config.glow} />
+                      <div>
+                        <b>{shortAddress(c.wallet)}</b>
+                        <span>{c.topAgent ? c.topAgent.name : "Creator"}</span>
+                      </div>
+                      <span>{fmt(c.runs)} runs</span>
+                      <div className={s.amt}>
+                        {fmt(c.earned)} CR<small>earned</small>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className={s.empty}>
               <img src="/brand/mochibo-wave.webp" alt="" width={220} height={220} loading="lazy" />
               <b>No creators ranked yet</b>
-              <p>The weekly leaderboard starts when publishing goes live. Build your agent now and be one of the first on it.</p>
+              <p>Publish an agent and earn from its runs to be the first on this week&apos;s board.</p>
               <a className="btn btn-glass btn-sm" href="#studio">
                 Open the studio
               </a>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

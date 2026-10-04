@@ -23,7 +23,8 @@ module.exports = {
       script: "node_modules/next/dist/bin/next",
       // Bound to localhost: only Nginx is reachable from outside.
       args: `start -p ${port} -H 127.0.0.1`,
-      env: { NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1" },
+      // Share and embed pages read published agents from the API on this machine.
+      env: { NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", API_INTERNAL_URL: `http://127.0.0.1:${apiPort}` },
       max_memory_restart: "800M",
     },
     {

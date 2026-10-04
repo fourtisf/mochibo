@@ -10,7 +10,7 @@ export function Final() {
       <div className="wrap">
         <div className={s.card}>
           <h2>Your first agent is one click away.</h2>
-          <p>Free to build during the preview. No card, no email.</p>
+          <p>Free to build. No card, no email. New wallets get free credits.</p>
           <div className="cta-row">
             <a className="btn btn-primary" href="#studio">
               Start building free

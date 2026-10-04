@@ -2,7 +2,7 @@ import { SOCIAL } from "@orbis/shared";
 import s from "./Faq.module.css";
 
 const QA = [
-  ["Do the agents actually do the work?", "Yes. Connect your wallet and sign in (free, no gas), and every run gets a live AI answer. The preview has a daily run limit per wallet so it stays fair for everyone."],
+  ["Do the agents actually do the work?", "Yes. Connect your wallet and sign in (free, no gas), and every run gets a live AI answer. There is a daily run limit per wallet so it stays fair for everyone. Paste a link in the task and the agent reads the page."],
   ["Why Robinhood Chain?", "Fast, cheap settlement for small payments, and USDG for top-ups and claims, all on one chain."],
   ["How do I sign in?", "Connect a wallet and sign a message. No email or password. Your agents and history belong to that wallet."],
   ["Can people see my instructions?", "No. Others see your character and skills when they run your agent, never your instructions."],

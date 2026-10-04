@@ -50,7 +50,7 @@ export function Studio() {
               <i />
             </span>
             <span className={s.crumb}>
-              My agents / <b>{agent.name}</b>
+              <AgentSwitcher /> / <b>{agent.name}</b>
             </span>
             <span className="bar-right">
               <span className={s.saved}>
@@ -151,6 +151,79 @@ export function Studio() {
   }
 }
 
+/** "My agents" menu: switch between saved agents, start a new one, delete the open one. */
+function AgentSwitcher() {
+  const { agent, agents, openAgent, newAgent, deleteAgent } = usePreview();
+  const signedIn = useAuth().status === "authenticated";
+  const toast = useToast();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("click", close);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("click", close);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [open]);
+  if (!signedIn) return <>My agents</>;
+  return (
+    <span className={s.switch} ref={ref}>
+      <button className={s.switchBtn} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        My agents ({agents.length})
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+        <span className={`${s.menu} glass`} role="menu">
+          {agents.map((a) => (
+            <button
+              key={a.id}
+              role="menuitem"
+              aria-current={a.id === agent.id}
+              onClick={() => {
+                openAgent(a.id);
+                setOpen(false);
+              }}
+            >
+              <span>{a.name}</span>
+              {a.published && <i>Live</i>}
+            </button>
+          ))}
+          <hr />
+          <button
+            role="menuitem"
+            onClick={async () => {
+              setOpen(false);
+              await newAgent();
+              toast("New agent created");
+            }}
+          >
+            New agent
+          </button>
+          {agent.id && (
+            <button
+              role="menuitem"
+              className={s.danger}
+              onClick={async () => {
+                if (!window.confirm(`Delete ${agent.name}? It leaves Discover and cannot be opened again.`)) return;
+                setOpen(false);
+                await deleteAgent(agent.id!).catch(() => toast("Could not delete. Try again."));
+              }}
+            >
+              Delete this agent
+            </button>
+          )}
+        </span>
+      )}
+    </span>
+  );
+}
+
 /** Voice on/off for talking characters (remembered in this browser). */
 function VoiceToggle() {
   const on = useVoiceOn();
@@ -167,12 +240,18 @@ function VoiceToggle() {
 function Console() {
   const { agent } = usePreview();
   const stages = useStages();
-  const { out, busy, run } = useRun();
+  const { out, turns, busy, run, reset } = useRun();
   // Credits belong to a wallet: until one is signed in, the button connects instead of running.
   const signedOut = useAuth().status === "unauthenticated";
   const [skill, setSkill] = useState<string>(agent.skills[0] ?? "");
   const [task, setTask] = useState("");
   const taskRef = useRef<HTMLTextAreaElement>(null);
+  // A finished answer joins the chat: clear the box for the follow-up.
+  useEffect(() => {
+    if (turns.length) setTask("");
+  }, [turns.length]);
+  // A different agent starts a new chat.
+  useEffect(() => reset(), [agent.id, reset]);
 
   // Keep the selected skill valid when the equipped list changes.
   useEffect(() => {
@@ -205,7 +284,7 @@ function Console() {
           ref={taskRef}
           rows={1}
           aria-label="Task"
-          placeholder="Ask your agent to do something…"
+          placeholder={turns.length ? "Ask a follow-up…" : "Ask your agent to do something…"}
           value={task}
           onChange={(e) => setTask(e.target.value)}
           onKeyDown={(e) => {
@@ -227,12 +306,12 @@ function Console() {
         }}
       />
       <div className={s.conMeta}>
-        <span>{ECONOMICS.runCostCr} CR per run in preview</span>
+        <span>{ECONOMICS.runCostCr} CR per run</span>
         <span>
           <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to run
         </span>
       </div>
-      <RunOutput out={out} />
+      <RunOutput out={out} turns={turns} onNewChat={reset} />
     </div>
   );
 }

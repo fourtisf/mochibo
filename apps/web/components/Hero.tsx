@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { APP_DISPLAY_HOST, CHARACTERS, ECONOMICS } from "@orbis/shared";
 import { HERO_TASKS, MARKET } from "@/lib/placeholder";
+import { useStats } from "@/lib/stats";
 import { portraitUrl } from "@/lib/images";
 import { isReducedMotion } from "@/lib/hooks";
 import { PowerDock } from "./PowerDock";
@@ -15,6 +16,7 @@ const HeroStage = dynamic(() => import("./HeroStage"), { ssr: false });
 const feeFactor = 1 - ECONOMICS.platformFeeBps / 10_000;
 
 export function Hero() {
+  const stats = useStats();
   const [idx, setIdx] = useState(0);
   const n = CHARACTERS.length;
   const c = CHARACTERS[idx];
@@ -44,16 +46,19 @@ export function Hero() {
   const cardChar = CHARACTERS[card.charIdx];
   const task = HERO_TASKS[cardI % HERO_TASKS.length];
   const earn = MARKET[cardI % MARKET.length];
+  // Real recent payouts once there are any; illustrative examples until then.
+  const recent = stats?.recent ?? [];
+  const real = recent.length ? recent[cardI % recent.length] : null;
   const taskTitle = cardI === 0 ? "Juni is researching" : `${cardChar.name} ${task[0]}`;
-  const earnFrom = cardI === 0 ? "Thread Smith" : earn.name;
-  const earnVal = cardI === 0 ? "7.60" : (earn.price * feeFactor).toFixed(2);
+  const earnFrom = real ? real.agent.name : cardI === 0 ? "Thread Smith" : earn.name;
+  const earnVal = real ? real.earned.toFixed(2) : cardI === 0 ? "7.60" : (earn.price * feeFactor).toFixed(2);
 
   return (
     <section className={s.hero} id="top">
       <div className={`wrap ${s.head}`}>
         <a className={s.announce} href="#studio">
           <span className={s.pd} />
-          Preview is live <b>Try the studio</b>
+          Now live <b>Try the studio</b>
         </a>
         <h1>AI agents with a face, a wardrobe and a job.</h1>
         <p className={s.lede}>
@@ -109,7 +114,9 @@ export function Hero() {
               </div>
             </div>
             <div className={`${s.fcard} ${s.fcEarn} glass${swap ? " " + s.swap : ""}`}>
-              <div className={s.fcS}>Example payout · {earnFrom}</div>
+              <div className={s.fcS}>
+                {real ? "Creator earned" : "Example payout"} · {earnFrom}
+              </div>
               <div className={s.earnBig}>+{earnVal} CR</div>
               <svg className={s.spark} viewBox="0 0 200 34" preserveAspectRatio="none" aria-hidden="true">
                 <defs>
