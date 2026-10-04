@@ -37,6 +37,7 @@ export function AgentPage({ agent }: { agent: PublicAgent }) {
       price,
       thumb: agent.thumbnailUrl || portraitUrl(CHARACTER_BY_ID[agent.baseId] ? agent.baseId : "juni"),
       glow: cfg.glow,
+      character: cfg,
       lang: "English",
       tone: "Friendly",
       instructions: "",

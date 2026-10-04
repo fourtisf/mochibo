@@ -14,6 +14,14 @@ export interface StageOptions {
   lowPower?: boolean;
   /** Called after a tapped actor plays its random reaction. */
   onTap?: (actor: Actor, stage: Stage) => void;
+  /** Fixed device pixel ratio (for recording at an exact size). Default: the screen's, capped. */
+  pixelRatio?: number;
+  /** Eyes and head follow the pointer. Default true. Recording stages pass false. */
+  trackPointer?: boolean;
+  /** Pause rendering while the canvas is off screen. Default true. Recording stages pass false. */
+  pauseOffscreen?: boolean;
+  /** Called right after each rendered frame, while the drawing buffer still holds it (for recording). */
+  onFrame?: (stage: Stage) => void;
 }
 
 export interface ActorOptions {

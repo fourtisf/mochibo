@@ -18,7 +18,7 @@ const csp = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   // Wallet SDKs talk to their own HTTPS and WebSocket endpoints.
-  `connect-src 'self' https: wss:${dev ? " ws:" : ""}`,
+  `connect-src 'self' blob: https: wss:${dev ? " ws:" : ""}`,
   "frame-src 'self' https://verify.walletconnect.com https://verify.walletconnect.org",
   "worker-src 'self' blob:",
   "media-src 'self' blob: data:",

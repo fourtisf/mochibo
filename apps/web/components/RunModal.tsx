@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { SKILL_BY_ID, type Language, type SkillId, type Tone } from "@orbis/shared";
+import { SKILL_BY_ID, type CharacterConfig, type Language, type SkillId, type Tone } from "@orbis/shared";
 import { CloseIcon } from "@/lib/icons";
 import { authActions, useAuth } from "@/lib/auth";
 import { useRun } from "@/lib/preview/run";
@@ -19,6 +19,8 @@ export interface RunTarget {
   price: number;
   thumb: string;
   glow: string;
+  /** The agent's look, for "Make video". */
+  character?: CharacterConfig;
   lang: Language;
   tone: Tone;
   /** Sent to our API with the run, never shown to other people. */
@@ -118,7 +120,7 @@ export function RunModal({ target, onClose }: { target: RunTarget | null; onClos
               </button>
             </div>
             {mic.error && <div className="mic-note">{mic.error}</div>}
-            <RunOutput out={out} turns={turns} onNewChat={reset} style={{ maxHeight: 300 }} />
+            <RunOutput out={out} turns={turns} onNewChat={reset} style={{ maxHeight: 300 }} speaker={target.character ? { config: target.character, name: target.name } : undefined} />
           </div>
         </>
       )}

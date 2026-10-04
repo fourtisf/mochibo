@@ -43,6 +43,8 @@ export class StageImpl implements Stage, ActorHost {
 
   private readonly o: ResolvedOptions;
   private readonly onTap?: StageOptions["onTap"];
+  private readonly onFrame?: StageOptions["onFrame"];
+  private readonly trackPointer: boolean;
   private fx: Fx[] = [];
   private readonly ray = new THREE.Raycaster();
   private readonly env: THREE.WebGLRenderTarget;
@@ -65,11 +67,13 @@ export class StageImpl implements Stage, ActorHost {
       lookY: options.lookY ?? 0.95,
     };
     this.onTap = options.onTap;
+    this.onFrame = options.onFrame;
+    this.trackPointer = options.trackPointer !== false;
     this.lowPower = options.lowPower ?? getLowPower();
     const low = this.lowPower;
 
     const r = (this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" }));
-    r.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1.5 : 2)); r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.05;
+    r.setPixelRatio(options.pixelRatio ?? Math.min(window.devicePixelRatio || 1, low ? 1.5 : 2)); r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.05;
     r.shadowMap.enabled = !low; r.shadowMap.type = THREE.PCFSoftShadowMap;
     this.scene = new THREE.Scene(); this.env = makeEnv(r); this.scene.environment = this.env.texture;
     this.camera = new THREE.PerspectiveCamera(28, 1, 0.1, 80);
@@ -82,7 +86,7 @@ export class StageImpl implements Stage, ActorHost {
     const gf = new THREE.Mesh(new THREE.PlaneGeometry(9, 9), new THREE.MeshBasicMaterial({ map: floorTex(), transparent: true, depthWrite: false, toneMapped: false })); gf.rotation.x = -Math.PI / 2; gf.position.y = -0.121; this.scene.add(gf);
     this.floors.push(floor, gf);
     this.bind();
-    if (typeof IntersectionObserver !== "undefined") {
+    if (options.pauseOffscreen !== false && typeof IntersectionObserver !== "undefined") {
       this.io = new IntersectionObserver((es) => { this.visible = es[0].isIntersecting; }, { rootMargin: "120px" });
       this.io.observe(canvas);
     }
@@ -120,8 +124,10 @@ export class StageImpl implements Stage, ActorHost {
       this.mouse.x = (e.clientX - (r.left + r.width / 2)) / (window.innerWidth / 2);
       this.mouse.y = (e.clientY - (r.top + r.height * 0.32)) / (window.innerHeight / 2);
     };
-    window.addEventListener("pointermove", onWinMove, { passive: true });
-    this.unbind.push(() => window.removeEventListener("pointermove", onWinMove));
+    if (this.trackPointer) {
+      window.addEventListener("pointermove", onWinMove, { passive: true });
+      this.unbind.push(() => window.removeEventListener("pointermove", onWinMove));
+    }
   }
 
   private tap(e: PointerEvent): void {
@@ -155,6 +161,7 @@ export class StageImpl implements Stage, ActorHost {
     for (let i = this.fx.length - 1; i >= 0; i--) { const f = this.fx[i]; f.t += dt; const p = Math.min(1, f.t / f.d); f.u(p, dt, (f.a ? f.a.mod : null) as Mod); if (p >= 1) { if (f.e) f.e(); this.fx.splice(i, 1); } }
     this.actors.forEach((a) => a.finish(dt, t));
     this.renderer.render(this.scene, this.camera);
+    if (this.onFrame) this.onFrame(this);
   }
 
   private sprite(col: string, s: number, op = 1): THREE.Sprite {

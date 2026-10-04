@@ -7,6 +7,7 @@ import {
   SKILL_BY_ID,
   formatBps,
   normalizeCharacter,
+  type CharacterConfig,
   type PublicAgent,
   type SkillCategory,
   type SkillId,
@@ -27,6 +28,7 @@ interface Card {
   by: string;
   thumb: string;
   glow: string;
+  config: CharacterConfig;
   cats: SkillCategory[];
   desc: string;
   skills: SkillId[];
@@ -74,6 +76,7 @@ export function Discover() {
         by: isMine ? "by you" : `by ${shortAddress(a.creator)}`,
         thumb: a.thumbnailUrl || portraitUrl(CHARACTER_BY_ID[a.baseId] ? a.baseId : "juni"),
         glow: cfg.glow,
+        config: cfg,
         cats: catsOf(a.skills),
         desc: a.skills.map((id) => SKILL_BY_ID[id].desc).join(" "),
         skills: a.skills,
@@ -90,6 +93,7 @@ export function Discover() {
       by: `Example agent · ${m.by}`,
       thumb: portraitUrl(m.char),
       glow: CHARACTER_BY_ID[m.char].config.glow,
+      config: CHARACTER_BY_ID[m.char].config,
       cats: [m.cat],
       desc: m.desc,
       skills: m.skills,
@@ -120,6 +124,7 @@ export function Discover() {
       price: c.price,
       thumb: c.thumb,
       glow: c.glow,
+      character: c.config,
       lang: "English",
       tone: "Friendly",
       instructions: c.desc,

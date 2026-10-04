@@ -1,0 +1,66 @@
+.dlg {
+  width: min(400px, 100% - 24px);
+}
+.wrap {
+  padding: 18px 20px 20px;
+}
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.head h3 {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+}
+.frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid var(--line2);
+  background: #130f33;
+}
+/* The 3D stage renders here unseen; its frames are drawn into the preview canvas. */
+.three {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.preview {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 9 / 16;
+  max-height: 62vh;
+  object-fit: contain;
+  background: #130f33;
+}
+.bar {
+  height: 6px;
+  margin-top: 14px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.bar i {
+  display: block;
+  height: 100%;
+  background: var(--aqua);
+  transition: width 0.2s linear;
+}
+.note {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink3);
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}

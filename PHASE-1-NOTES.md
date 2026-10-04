@@ -311,3 +311,10 @@ Changes to the draft schema:
 - Uses the browser's speech recognition (`apps/web/lib/listen.ts`), free and keyless. Chrome, Edge and Safari support it; the button hides where it is missing (Firefox). Chrome and Edge transcribe on their own speech service, which the Privacy page now says. `Permissions-Policy` allows the microphone for the site itself only.
 - Clear messages when the mic is blocked, missing, or nothing was heard.
 - **Mobile fix (old bug):** on phones the studio's tab row and motion chips forced the studio 89 px wider than the screen, cutting off the Publish tab and the Run button. The grid columns are now `minmax(0, 1fr)` so those rows scroll instead.
+
+## Update: answer as video
+
+- **"Make video"** sits next to Copy and Post to X on every finished answer (studio, Discover, share pages). It records a 720x1280 vertical clip of the agent saying the answer: the agent's name, the question, the 3D character waving, talking and gesturing, one caption per sentence, and a closing card "Build your own agent at mochibo.studio".
+- All in the browser, no server cost: a hidden 3D stage renders the character, `lib/video.ts` draws each frame with the captions, and `MediaRecorder` records the canvas. MP4 where the browser can (Chrome 126+, Edge, Safari), WebM otherwise. Download, or Share on phones.
+- Clips are silent (browsers cannot record their own speech voice) and capped at 40 seconds; longer answers are cut at a sentence.
+- The engine got three stage options for this: `pixelRatio`, `pauseOffscreen` and `trackPointer`, plus an `onFrame` callback that runs right after each render.

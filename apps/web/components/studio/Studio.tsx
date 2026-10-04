@@ -383,7 +383,7 @@ function Console() {
           <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to run
         </span>
       </div>
-      <RunOutput out={out} turns={turns} onNewChat={reset} />
+      <RunOutput out={out} turns={turns} onNewChat={reset} speaker={{ config: agent.cfg, name: agent.name }} />
     </div>
   );
 }
