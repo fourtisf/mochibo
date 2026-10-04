@@ -8,7 +8,8 @@
 #   2. A free local port for the API, stored in deploy/.api-port.
 #   3. /home/mochibo/api.env, the API's secret settings (readable by the app user only).
 #      Values you set yourself (OpenRouter key, model, limits) are kept.
-#   4. The Nginx route /api -> API, as a snippet included by the site.
+#   4. The uploads folder for agent portraits, daily backups (14 days) and a 5-minute health check.
+#   5. The Nginx routes /api -> API and /uploads -> portraits on disk, as a snippet included by the site.
 set -euo pipefail
 
 DOMAIN="${DOMAIN:-mochibo.studio}"
@@ -18,6 +19,7 @@ ENV_FILE="/home/$APP_USER/api.env"
 REDIS_CONF="/etc/redis/redis-mochibo.conf"
 SNIPPET="/etc/nginx/snippets/mochibo-api.conf"
 SITE="/etc/nginx/sites-available/$DOMAIN"
+UPLOAD_DIR="/var/www/mochibo-uploads"
 
 [ "$(id -u)" = 0 ] || { echo "Run as root."; exit 1; }
 port_free() { ! ss -ltnH "sport = :$1" | grep -q .; }
@@ -100,7 +102,7 @@ OPENROUTER_API_KEY=
 # Model id copied from openrouter.ai/models, for example anthropic/claude-haiku-4.5
 AI_MODEL=
 # Longest answer, in tokens
-AI_MAX_TOKENS=700
+AI_MAX_TOKENS=1200
 # true gives the Web research skill OpenRouter web search (paid per request)
 ENABLE_WEB_SEARCH=false
 
@@ -123,6 +125,7 @@ NODE_ENV=production
 APP_URL=https://$DOMAIN
 REDIS_URL=redis://:$REDIS_PASS@127.0.0.1:$REDIS_PORT
 DATABASE_URL=$DATABASE_URL
+UPLOAD_DIR=$UPLOAD_DIR
 ENV
 else
   # Keep the owner's values; refresh only the lines this script manages.
@@ -138,6 +141,9 @@ else
   set_key APP_URL "https://$DOMAIN"
   set_key REDIS_URL "redis://:$REDIS_PASS@127.0.0.1:$REDIS_PORT"
   set_key DATABASE_URL "$DATABASE_URL"
+  set_key UPLOAD_DIR "$UPLOAD_DIR"
+  # Answers got longer: move the old default up, but keep a value the owner chose.
+  if grep -qx "AI_MAX_TOKENS=700" "$ENV_FILE"; then set_key AI_MAX_TOKENS 1200; fi
 fi
 chown "$APP_USER:$APP_USER" "$ENV_FILE"
 chmod 600 "$ENV_FILE"
@@ -156,7 +162,26 @@ cat > /etc/cron.d/mochibo-reconcile <<CRON
 CRON
 chmod 644 /etc/cron.d/mochibo-reconcile
 
-echo "==> Nginx route /api"
+echo "==> Agent portraits ($UPLOAD_DIR)"
+mkdir -p "$UPLOAD_DIR"
+chown "$APP_USER:$APP_USER" "$UPLOAD_DIR"
+chmod 755 "$UPLOAD_DIR"
+
+echo "==> Daily backups (cron, 03:41 server time, kept 14 days in /var/backups/mochibo)"
+cat > /etc/cron.d/mochibo-backup <<CRON
+# Mochibo: database and portraits backup (written by deploy/api-setup.sh). Log: /var/log/mochibo-backup.log
+41 3 * * * root UPLOAD_DIR=$UPLOAD_DIR bash $APP_DIR/deploy/backup.sh >> /var/log/mochibo-backup.log 2>&1
+CRON
+chmod 644 /etc/cron.d/mochibo-backup
+
+echo "==> Health check (cron, every 5 minutes, problems in /home/$APP_USER/health.log)"
+cat > /etc/cron.d/mochibo-health <<CRON
+# Mochibo: restarts the API if it stops answering (written by deploy/api-setup.sh).
+*/5 * * * * root APP_USER=$APP_USER bash $APP_DIR/deploy/health-check.sh
+CRON
+chmod 644 /etc/cron.d/mochibo-health
+
+echo "==> Nginx routes /api and /uploads"
 mkdir -p /etc/nginx/snippets
 cat > "$SNIPPET" <<NGINX
 # Mochibo API (written by deploy/api-setup.sh). Streams answers, so buffering is off.
@@ -173,6 +198,17 @@ location /api/ {
     proxy_cache off;
     proxy_read_timeout 120s;
     gzip off;
+}
+
+# Agent portraits, straight from disk. Names are random and change on every upload, so they cache forever.
+location /uploads/ {
+    alias $UPLOAD_DIR/;
+    autoindex off;
+    types { image/webp webp; image/png png; }
+    default_type application/octet-stream;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Cache-Control "public, max-age=31536000, immutable";
+    access_log off;
 }
 NGINX
 if [ -f "$SITE" ] && ! grep -q "mochibo-api.conf" "$SITE"; then
