@@ -7,6 +7,7 @@ import { StarIcon } from "@/lib/icons";
 import { fmt } from "@/lib/format";
 import { usePreview } from "@/lib/preview/store";
 import { Portrait } from "./Portrait";
+import { authActions, useAuth } from "@/lib/auth";
 import { RunModal, type RunTarget } from "./RunModal";
 import s from "./Discover.module.css";
 
@@ -50,7 +51,13 @@ export function Discover() {
   }
   for (const m of MARKET) list.push({ ...m, thumb: portraitUrl(m.char), glow: CHARACTER_BY_ID[m.char].config.glow });
 
+  const signedOut = useAuth().status === "unauthenticated";
   const open = (c: Card) => {
+    // Runs are paid with a wallet's credits: connect first.
+    if (signedOut) {
+      authActions.openSignIn();
+      return;
+    }
     openKey.current++;
     setTarget(
       c.mine

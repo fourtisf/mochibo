@@ -9,6 +9,7 @@ import { usePreview } from "@/lib/preview/store";
 import { useRun } from "@/lib/preview/run";
 import { useStages } from "@/lib/stages";
 import { setVoiceOn, useVoiceOn } from "@/lib/talk";
+import { authActions, useAuth } from "@/lib/auth";
 import { useToast } from "@/lib/toast";
 import { CharacterPane, GearPane, MindPane, PublishPane, SkillsPane, StylePane } from "./Panes";
 import s from "./Studio.module.css";
@@ -166,6 +167,8 @@ function Console() {
   const { agent } = usePreview();
   const stages = useStages();
   const { out, busy, run } = useRun();
+  // Credits belong to a wallet: until one is signed in, the button connects instead of running.
+  const signedOut = useAuth().status === "unauthenticated";
   const [skill, setSkill] = useState<string>(agent.skills[0] ?? "");
   const [task, setTask] = useState("");
 
@@ -209,8 +212,8 @@ function Console() {
             }
           }}
         />
-        <button className="btn btn-primary" onClick={go} disabled={busy}>
-          {busy ? "Working…" : "Run"}
+        <button className="btn btn-primary" onClick={signedOut ? () => authActions.openSignIn() : go} disabled={busy}>
+          {busy ? "Working…" : signedOut ? "Connect wallet to run" : "Run"}
         </button>
       </div>
       <div className={s.conMeta}>

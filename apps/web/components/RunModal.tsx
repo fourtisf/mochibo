@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SKILL_BY_ID, type Language, type SkillId, type Tone } from "@orbis/shared";
 import { CloseIcon } from "@/lib/icons";
+import { authActions, useAuth } from "@/lib/auth";
 import { useRun } from "@/lib/preview/run";
 import { Portrait } from "./Portrait";
 import { RunOutput } from "./RunOutput";
@@ -26,6 +27,7 @@ export interface RunTarget {
 export function RunModal({ target, onClose }: { target: RunTarget | null; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
   const { out, busy, run, reset } = useRun();
+  const signedOut = useAuth().status === "unauthenticated";
   const [skill, setSkill] = useState("");
   const [task, setTask] = useState("");
 
@@ -80,15 +82,23 @@ export function RunModal({ target, onClose }: { target: RunTarget | null; onClos
             <button
               className="btn btn-primary btn-block"
               disabled={busy}
-              onClick={() => run({
+              onClick={() => {
+                if (signedOut) {
+                  // The wallet modal cannot show above an open <dialog>, so close this first.
+                  close();
+                  authActions.openSignIn();
+                  return;
+                }
+                run({
                   skillId: skill,
                   task,
                   source: target.exampleId
                     ? { kind: "example", id: target.exampleId }
                     : { kind: "studio", persona: { name: target.name, instructions: target.instructions, tone: target.tone, lang: target.lang, skills: target.skills } },
-                })}
+                });
+              }}
             >
-              {busy ? "Working…" : target.price ? `Run for ${target.price} CR` : "Run for free"}
+              {busy ? "Working…" : signedOut ? "Connect wallet to run" : target.price ? `Run for ${target.price} CR` : "Run for free"}
             </button>
             <RunOutput out={out} style={{ maxHeight: 260 }} />
           </div>

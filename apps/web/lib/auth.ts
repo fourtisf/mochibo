@@ -67,6 +67,8 @@ export const authActions = {
   /** Opens the wallet modal (connect, then sign in). Returns false if the wallet button is not ready yet. */
   openSignIn(): boolean {
     if (!opener) return false;
+    // An open <dialog> sits in the top layer and would hide the wallet modal.
+    document.querySelectorAll<HTMLDialogElement>("dialog[open]").forEach((d) => d.close());
     opener();
     return true;
   },

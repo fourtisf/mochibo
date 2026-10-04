@@ -75,7 +75,13 @@ export function Nav() {
               onClick={() => setOpen((o) => !o)}
             >
               <span className={s.crDot} />
-              <span>{signedIn && balance !== null ? fmt(balance) : 0}</span>&nbsp;CR
+              {signedIn ? (
+                <>
+                  <span>{balance !== null ? fmt(balance) : "…"}</span>&nbsp;CR
+                </>
+              ) : (
+                <span>Get {ECONOMICS.previewStartCr} CR</span>
+              )}
             </button>
             <div className={`${s.pop}${open ? " " + s.open : ""}`} role="dialog" aria-label="Credits">
               {signedIn ? (
