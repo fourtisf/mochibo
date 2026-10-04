@@ -10,3 +10,6 @@ coverage/
 .env*.local
 deploy/.web-port
 deploy/.api-port
+
+# Test screenshots
+/*.png

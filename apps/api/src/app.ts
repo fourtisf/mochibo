@@ -34,7 +34,7 @@ export function buildApp({ env, store, db, fetchImpl = fetch, logger = true }: A
   // CSRF: every state-changing request must come from the site itself.
   app.addHook("onRequest", async (req, reply) => {
     if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") return;
-    if (req.headers.origin !== env.appOrigin) return reply.code(403).send({ error: "forbidden", message: "Requests must come from the Mochibo site." });
+    if (!env.appOrigins.includes(req.headers.origin ?? "")) return reply.code(403).send({ error: "forbidden", message: "Requests must come from the Mochibo site." });
   });
 
   app.get("/health", async () => ({ ok: true }));

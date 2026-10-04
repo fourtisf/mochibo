@@ -55,7 +55,9 @@ export function authRoutes(app: FastifyInstance, env: Env, store: Store, db: Pri
     const msg = parseSiweMessage(body.data.message);
     if (!msg.address || !isAddress(msg.address) || !msg.nonce) return fail("The sign-in message is not valid.");
     if (env.CHAIN_ID && msg.chainId !== env.CHAIN_ID) return fail("Switch to the supported network, then sign in again.");
-    if (!validateSiweMessage({ message: msg, domain: env.siweDomain, nonce: msg.nonce })) return fail("The sign-in message is for another site or has expired.");
+    if (!msg.domain || !env.siweDomains.includes(msg.domain) || !validateSiweMessage({ message: msg, domain: msg.domain, nonce: msg.nonce })) {
+      return fail("The sign-in message is for another site or has expired.");
+    }
     // One use per nonce, and only nonces this server issued in the last 5 minutes.
     if (!(await store.take(`nonce:${msg.nonce}`))) return fail("The sign-in request expired. Try again.");
 

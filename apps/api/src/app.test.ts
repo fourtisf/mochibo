@@ -97,6 +97,15 @@ describe.skipIf(!DB_URL)("auth", () => {
     expect(noOrigin.statusCode).toBe(403);
   });
 
+  it("accepts the www twin of the site for sign-in and writes", async () => {
+    const { app } = setup();
+    apps.push(app);
+    const { nonce } = (await app.inject({ method: "GET", url: "/auth/nonce" })).json();
+    const message = createSiweMessage({ address: account.address, chainId: 1, domain: "www.mochibo.studio", nonce, uri: "https://www.mochibo.studio", version: "1" });
+    const res = await app.inject({ method: "POST", url: "/auth/verify", headers: { origin: "https://www.mochibo.studio" }, payload: { message, signature: await account.signMessage({ message }) } });
+    expect(res.statusCode).toBe(200);
+  });
+
   it("requires the configured chain id", async () => {
     const { app } = setup({ CHAIN_ID: "4663" });
     apps.push(app);

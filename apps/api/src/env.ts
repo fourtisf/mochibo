@@ -57,7 +57,16 @@ const EnvSchema = z.object({
   SESSION_DAYS: int(7),
 });
 
-export type Env = z.infer<typeof EnvSchema> & { appOrigin: string; siweDomain: string; aiReady: boolean; secureCookies: boolean };
+export type Env = z.infer<typeof EnvSchema> & {
+  appOrigin: string;
+  /** The site's origins: APP_URL and its www twin (Nginx serves both). */
+  appOrigins: string[];
+  siweDomain: string;
+  /** Hosts a SIWE message may name: APP_URL's host and its www twin. */
+  siweDomains: string[];
+  aiReady: boolean;
+  secureCookies: boolean;
+};
 
 export function loadEnv(src: NodeJS.ProcessEnv = process.env): Env {
   const r = EnvSchema.safeParse(src);
@@ -67,10 +76,15 @@ export function loadEnv(src: NodeJS.ProcessEnv = process.env): Env {
   }
   const e = r.data;
   const url = new URL(e.APP_URL);
+  const twin = url.hostname.startsWith("www.") ? url.host.slice(4) : `www.${url.host}`;
+  const isIp = /^[\d.]+$/.test(url.hostname) || url.hostname === "localhost";
+  const hosts = isIp ? [url.host] : [url.host, twin];
   return {
     ...e,
     appOrigin: url.origin,
+    appOrigins: hosts.map((h) => `${url.protocol}//${h}`),
     siweDomain: url.host,
+    siweDomains: hosts,
     aiReady: Boolean(e.OPENROUTER_API_KEY && e.AI_MODEL),
     secureCookies: url.protocol === "https:",
   };

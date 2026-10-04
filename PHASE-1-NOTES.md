@@ -270,3 +270,15 @@ Changes to the draft schema:
 - `api-setup.sh` writes `DATABASE_URL` to `api.env` and installs the nightly check.
 - `update.sh` runs `prisma migrate deploy`.
 - Verified in the sandbox: the setup block twice, login with the generated password, and the migrate line from `update.sh`.
+
+## Update: own sign-in step (fixes "Error signing message")
+
+- **The problem.** RainbowKit's built-in SIWE step signs through wagmi's `signMessage`. Its connector checks can fail when several wallet extensions are installed or the wallet is on another chain. When they fail, RainbowKit shows only "Error signing message, please retry!".
+- **The new step.** `components/wallet/WalletButton.tsx` now has its own "Verify your wallet" dialog:
+  - It sends `personal_sign` straight to the connected wallet's provider, using the chain id the wallet reports.
+  - It shows the wallet's real error, and says so clearly when the user cancels.
+  - It logs failures to the console as `[sign-in]`.
+  - It is rendered through a portal to `<body>`, because the nav's `backdrop-filter` traps fixed elements.
+  - Every "connect wallet" button runs the same flow: connect, then sign.
+- **API.** The API accepts the `www.` twin of `APP_URL` for SIWE domains and write Origins. Nginx serves both hosts, and requests from www were rejected with 403 before.
+- **Cleanup.** Two test screenshots committed by mistake in the talking-characters commit were removed, and `/*.png` at the repo root is now ignored.
