@@ -297,3 +297,9 @@ Changes to the draft schema:
 - **Verified** with `pnpm check` (typecheck, lint, 57 tests including 33 API tests against PostgreSQL) and a two-wallet browser test against the built app with a stand-in AI server: save, rename, reload, publish, share page without instructions, run by a second wallet (100 to 88 to 76 CR), follow-up with history, 5-star rating, creator credited 11.4 CR per run, leaderboard row, embed with `frame-ancestors *`, no console errors, and no horizontal scroll at 390 px.
 - **Still needs the owner:** USDG top-ups and claims (Robinhood Chain id, RPC, USDG address, a multisig, an audit), the ORBIS token address for holder tiers, and a legal review of Terms and Privacy.
 
+
+## Update: naming agents
+
+- **Rename in place.** Click the agent's name (with the pencil) in the studio bar to rename it. Enter or clicking away saves, Escape cancels. The Name field in the Mind tab still works too.
+- **Custom names stick.** Picking another character only renames the agent if it still has the default name ("My Juni" becomes "My Pip"); a name you chose is kept.
+- **The link follows the name.** The public link (`/a/<name>-<6 hex>`) is made from the name at the first publish. After that it stays the same, so links already shared keep working after a rename. Covered by an API test.

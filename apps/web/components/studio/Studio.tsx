@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { ECONOMICS, MOTIONS, SKILL_BY_ID } from "@orbis/shared";
+import { ECONOMICS, LIMITS, MOTIONS, SKILL_BY_ID } from "@orbis/shared";
 import { RunOutput } from "@/components/RunOutput";
 import { TryChips } from "@/components/TryChips";
 import { PowerDock } from "@/components/PowerDock";
@@ -50,7 +50,7 @@ export function Studio() {
               <i />
             </span>
             <span className={s.crumb}>
-              <AgentSwitcher /> / <b>{agent.name}</b>
+              <AgentSwitcher /> / <NameEdit />
             </span>
             <span className="bar-right">
               <span className={s.saved}>
@@ -221,6 +221,52 @@ function AgentSwitcher() {
         </span>
       )}
     </span>
+  );
+}
+
+/** The agent's name in the studio bar: click it (or the pencil) to rename in place. */
+function NameEdit() {
+  const { agent, updateAgent } = usePreview();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(agent.name);
+  const done = (save: boolean) => {
+    const name = draft.trim();
+    if (save && name && name !== agent.name) updateAgent({ name });
+    setEditing(false);
+  };
+  if (editing)
+    return (
+      <input
+        className={s.nameInput}
+        aria-label="Agent name"
+        autoFocus
+        maxLength={LIMITS.nameMax}
+        value={draft}
+        onFocus={(e) => e.currentTarget.select()}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => done(true)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") done(true);
+          else if (e.key === "Escape") done(false);
+        }}
+      />
+    );
+  return (
+    <button
+      className={s.nameBtn}
+      title="Rename your agent"
+      aria-label={`${agent.name}, rename`}
+      onClick={() => {
+        setDraft(agent.name);
+        setEditing(true);
+      }}
+    >
+      <b>{agent.name}</b>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M4 20h4L19 9l-4-4L4 16z" />
+        <path d="m13.5 6.5 4 4" />
+      </svg>
+    </button>
   );
 }
 

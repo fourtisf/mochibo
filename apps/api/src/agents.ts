@@ -169,10 +169,23 @@ export function agentRoutes(app: FastifyInstance, env: Env, store: Store, db: Pr
     if (!body.success) return bad(reply, body.error.issues[0]?.message ?? "Invalid request.");
     const { published, price } = body.data;
     if (published && found.agent.skills.length === 0) return bad(reply, "Equip at least one skill before publishing.");
-    const agent = await db.agent.update({
-      where: { id: found.agent.id },
-      data: { published, ...(price !== undefined ? { price } : {}), ...(published && !found.agent.publishedAt ? { publishedAt: new Date() } : {}) },
-    });
+    // The first publish gives the agent its public link, made from the name the creator chose.
+    // After that the link stays the same, so links already shared keep working after a rename.
+    const first = published && !found.agent.publishedAt;
+    const update = (slug?: string) =>
+      db.agent.update({
+        where: { id: found.agent.id },
+        data: { published, ...(price !== undefined ? { price } : {}), ...(first ? { publishedAt: new Date(), slug } : {}) },
+      });
+    let agent: Agent | undefined;
+    for (let attempt = 0; !agent; attempt++) {
+      try {
+        agent = await update(first ? slugify(found.agent.name) : undefined);
+      } catch (e) {
+        // Two agents with the same name drew the same random suffix: draw again.
+        if ((e as { code?: string }).code !== "P2002" || attempt >= 4) throw e;
+      }
+    }
     return { agent: ownView(agent) };
   });
 

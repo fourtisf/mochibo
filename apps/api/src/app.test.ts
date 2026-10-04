@@ -279,8 +279,8 @@ describe.skipIf(!DB_URL)("agents", () => {
     const { cookie } = await signIn(app, "mochibo.studio", creatorAcct);
     const created = await app.inject({ method: "POST", url: "/agents", headers: { origin: ORIGIN, cookie }, payload: NEW_AGENT });
     expect(created.statusCode).toBe(201);
-    const agent = created.json().agent;
-    if (publish) await app.inject({ method: "POST", url: `/agents/${agent.id}/publish`, headers: { origin: ORIGIN, cookie }, payload: { published: true, price: 20 } });
+    let agent = created.json().agent;
+    if (publish) agent = (await app.inject({ method: "POST", url: `/agents/${agent.id}/publish`, headers: { origin: ORIGIN, cookie }, payload: { published: true, price: 20 } })).json().agent;
     return { cookie, agent };
   }
 
@@ -299,6 +299,22 @@ describe.skipIf(!DB_URL)("agents", () => {
     expect((await app.inject({ method: "PATCH", url: `/agents/${agent.id}`, headers: { origin: ORIGIN, cookie: other }, payload: { name: "x" } })).statusCode).toBe(404);
     await app.inject({ method: "DELETE", url: `/agents/${agent.id}`, headers: { origin: ORIGIN, cookie } });
     expect((await app.inject({ method: "GET", url: "/agents/mine", headers: { cookie } })).json().agents).toHaveLength(0);
+  });
+
+  it("makes the public link from the chosen name at first publish, then keeps it", async () => {
+    const { app } = setup();
+    apps.push(app);
+    const { cookie, agent } = await creatorWithAgent(app, false);
+    const h = { origin: ORIGIN, cookie };
+    await app.inject({ method: "PATCH", url: `/agents/${agent.id}`, headers: h, payload: { name: "Degen Whisperer" } });
+    const pub = (await app.inject({ method: "POST", url: `/agents/${agent.id}/publish`, headers: h, payload: { published: true, price: 10 } })).json().agent;
+    expect(pub.slug).toMatch(/^degen-whisperer-[0-9a-f]{6}$/);
+    // Renaming, unpublishing and publishing again keep the link people already have.
+    await app.inject({ method: "PATCH", url: `/agents/${agent.id}`, headers: h, payload: { name: "Moon Oracle" } });
+    await app.inject({ method: "POST", url: `/agents/${agent.id}/publish`, headers: h, payload: { published: false } });
+    const again = (await app.inject({ method: "POST", url: `/agents/${agent.id}/publish`, headers: h, payload: { published: true, price: 10 } })).json().agent;
+    expect(again.slug).toBe(pub.slug);
+    expect((await app.inject({ method: "GET", url: `/a/${pub.slug}` })).json().agent.name).toBe("Moon Oracle");
   });
 
   it("publishes to Discover and the public page without the instructions", async () => {

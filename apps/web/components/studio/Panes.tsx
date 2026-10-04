@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import {
   CHARACTERS,
+  CHARACTER_BY_ID,
   CHIPS,
   ECONOMICS,
   LIMITS,
@@ -50,7 +51,7 @@ export function CharacterPane() {
             className={s.ro}
             aria-pressed={agent.baseId === c.id}
             onClick={() => {
-              const wasDefault = /^My /.test(agent.name);
+              const wasDefault = agent.name === `My ${CHARACTER_BY_ID[agent.baseId]?.name}` || agent.name === "Untitled agent";
               updateAgent({ baseId: c.id, role: c.role, cfg: { ...c.config }, ...(wasDefault ? { name: `My ${c.name}` } : {}) });
               stages.get("studio")?.main?.play("wave");
             }}
@@ -417,7 +418,7 @@ export function PublishPane({ active }: { active: boolean }) {
       <p className={s.note}>
         You earn the price minus a {formatBps(ECONOMICS.platformFeeBps)} fee on every run by someone else. Running your own agent costs {ECONOMICS.runCostCr} CR.
       </p>
-      {!shareLink && <p className={s.note}>Publish to get a share link and an embed code.</p>}
+      {!shareLink && <p className={s.note}>Publish to get a share link and an embed code. The link is made from your agent&apos;s name, so name it first.</p>}
       {shareLink && (
         <>
       <div className="field">
