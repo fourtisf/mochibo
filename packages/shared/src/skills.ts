@@ -53,46 +53,46 @@ export const TEMPLATES: readonly Template[] = [
   { name: "Translator", text: "Translate naturally into the language the user asks for. Keep slang and crypto terms the way people actually say them.", skills: ["translate", "writer"] },
 ];
 
-/** Ready-made tasks shown under the task box, so new users see what each skill can do. */
+/** Ready-made tasks shown under the task box, so new users see what each skill can do. Crypto-native on purpose. */
 export const SKILL_EXAMPLES: Readonly<Record<SkillId, readonly string[]>> = {
   research: [
-    "What is Robinhood Chain, and what should I check before using it?",
-    "Brief me on tokenized stocks: how they work and the main risks.",
-    "Compare three popular ways to build an AI agent today.",
+    "What is a memecoin, and why do people buy them?",
+    "Red flags to check before buying a brand-new token",
+    "Explain Robinhood Chain and tokenized stocks like I'm new to crypto",
   ],
   writer: [
-    "Write a launch tweet for my AI agent, under 280 characters.",
-    "Write a 4-post X thread announcing a new feature.",
-    "Rewrite this bio so it sounds friendly: I build tools for creators.",
+    "Write a hype launch tweet for a cute memecoin called $MOCHI",
+    "Write a 5-post X thread: why AI agents are the next crypto narrative",
+    "Write a funny reply to someone saying crypto is dead",
   ],
   docqa: [
-    "Text: Refunds are possible within 14 days if the item is unused. Question: Can I return a used item?",
-    "Text: 10% of tokens unlock at launch, the rest monthly over 12 months. Question: How much unlocks at launch?",
-    "Text: The event starts at 6 PM UTC and lasts two hours. Question: When does it end?",
+    "Text: Supply 1B. Team 5%, locked 12 months. Tax 0%. Question: Can the team sell right away?",
+    "Text: Airdrop to wallets holding 10,000 tokens at the Oct 10 snapshot. Question: How do I qualify?",
+    "Text: Staking pays 12% APR with a 7-day unbonding period. Question: How long until I can withdraw?",
   ],
   summary: [
-    "Summarize: Mochibo lets anyone build an AI agent with a 3D body, give it skills, run tasks and earn when others use it.",
-    "Summarize the key steps of a good product launch.",
-    "Summarize the pros and cons of working remotely.",
+    "Summarize the difference between a memecoin and a utility token",
+    "Summarize what DeFi is in 3 bullet points",
+    "Summarize how a token presale, launch and listing usually work",
   ],
   translate: [
-    "Translate to Spanish: Welcome to Mochibo, build your first agent today!",
-    "Translate to Japanese: Thank you for joining our community.",
-    "Translate to French: The preview is live, try the studio now.",
+    "Translate to Spanish: GM fam, the airdrop checker is live!",
+    "Translate to Japanese: Don't forget to claim before Friday.",
+    "Translate to Korean: New agent dropping today, WAGMI.",
   ],
   ideas: [
-    "Give me names for a cute AI pet app.",
-    "Ideas for a weekly community event on X.",
-    "Hooks for a short video about AI agents.",
+    "10 memecoin names with a cute mascot vibe",
+    "Viral meme ideas for a new token community on X",
+    "Giveaway ideas to grow a crypto community fast",
   ],
   code: [
-    "Explain this JavaScript: const total = items.reduce((sum, x) => sum + x.price, 0);",
-    "Explain this Solidity line: require(msg.sender == owner, \"Not owner\");",
-    "Explain what this does: SELECT name FROM users WHERE created_at > NOW() - INTERVAL '7 days';",
+    "What could go wrong here? function setTax(uint256 t) external onlyOwner { tax = t; }",
+    "Explain what approve() does in an ERC-20 token and why it can be risky",
+    "Explain this line: require(balanceOf[msg.sender] >= amount, \"Not enough tokens\");",
   ],
   planner: [
-    "Plan a 7-day launch for a new app.",
-    "Plan my week to learn basic coding in 30 minutes a day.",
-    "Plan a community giveaway on X, from idea to winner announcement.",
+    "Plan a 14-day memecoin launch, from first teaser to listing",
+    "Plan a weekly X content calendar for a crypto project",
+    "Plan an airdrop campaign step by step",
   ],
 };
