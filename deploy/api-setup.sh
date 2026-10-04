@@ -97,7 +97,14 @@ REDIS_URL=redis://:$REDIS_PASS@127.0.0.1:$REDIS_PORT
 ENV
 else
   # Keep the owner's values; refresh only the lines this script manages.
-  set_key() { if grep -q "^$1=" "$ENV_FILE"; then sed -i "s@^$1=.*@$1=$2@" "$ENV_FILE"; else echo "$1=$2" >> "$ENV_FILE"; fi; }
+  # Values can contain any character (the Redis URL has "@" and ":"), so lines are replaced without sed.
+  set_key() {
+    local tmp
+    tmp="$(mktemp)"
+    awk -v k="$1" -v v="$2" 'BEGIN { done = 0 } index($0, k "=") == 1 { if (!done) print k "=" v; done = 1; next } { print } END { if (!done) print k "=" v }' "$ENV_FILE" > "$tmp"
+    cat "$tmp" > "$ENV_FILE"
+    rm -f "$tmp"
+  }
   set_key NODE_ENV production
   set_key APP_URL "https://$DOMAIN"
   set_key REDIS_URL "redis://:$REDIS_PASS@127.0.0.1:$REDIS_PORT"
