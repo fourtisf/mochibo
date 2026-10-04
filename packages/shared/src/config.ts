@@ -31,6 +31,8 @@ export const LIMITS = {
 export const ECONOMICS = {
   /** Cost of a studio run of your own agent, in CR. Env RUN_COST_CR overrides on the server. */
   runCostCr: 5,
+  /** Free preview credits a visitor starts with (20 studio runs, the same as the daily live-run limit). */
+  previewStartCr: 100,
   /** Default platform fee in basis points (5%). Holder tiers lower it, see TIERS. */
   platformFeeBps: 500,
   /** Credits granted per 1 USDG deposited. */

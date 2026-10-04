@@ -83,7 +83,7 @@ const Ctx = createContext<PreviewStore | null>(null);
 const nowTime = () => new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 export function PreviewStoreProvider({ children }: { children: ReactNode }) {
-  const [credits, setCredits] = useState(500);
+  const [credits, setCredits] = useState<number>(ECONOMICS.previewStartCr);
   const [ledger, setLedger] = useState<LedgerItem[]>([]);
   const [agent, setAgent] = useState<StudioAgent>(INITIAL_AGENT);
   const [saveState, setSaveState] = useState<SaveState>("Saved");
