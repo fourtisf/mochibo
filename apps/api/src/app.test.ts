@@ -45,10 +45,10 @@ function setup(over: Record<string, string> = {}, fetchImpl: typeof fetch = fake
   return { app, store, env };
 }
 
-async function signIn(app: ReturnType<typeof setup>["app"], domain = "mochibo.studio") {
+async function signIn(app: ReturnType<typeof setup>["app"], domain = "mochibo.studio", who = account) {
   const { nonce } = (await app.inject({ method: "GET", url: "/auth/nonce" })).json();
-  const message = createSiweMessage({ address: account.address, chainId: 1, domain, nonce, uri: ORIGIN, version: "1" });
-  const signature = await account.signMessage({ message });
+  const message = createSiweMessage({ address: who.address, chainId: 1, domain, nonce, uri: ORIGIN, version: "1" });
+  const signature = await who.signMessage({ message });
   const res = await app.inject({ method: "POST", url: "/auth/verify", headers: { origin: ORIGIN }, payload: { message, signature } });
   const cookie = res.cookies.find((c) => c.name === "mochibo_session");
   return { res, cookie: cookie ? `${cookie.name}=${cookie.value}` : "", message, signature, rawCookie: cookie };
@@ -138,7 +138,7 @@ describe.skipIf(!DB_URL)("runs", () => {
     const res = await app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload: RUN });
     expect(res.statusCode).toBe(200);
     expect(res.headers["content-type"]).toContain("text/event-stream");
-    expect(events(res.body)).toEqual([{ t: "start", cost: 5, balance: 95 }, { t: "delta", text: "Hello " }, { t: "delta", text: "world" }, { t: "done", balance: 95 }]);
+    expect(events(res.body)).toEqual([{ t: "start", runId: expect.any(String), cost: 5, balance: 95, rateable: false }, { t: "delta", text: "Hello " }, { t: "delta", text: "world" }, { t: "done", balance: 95 }]);
     const sent = JSON.parse(calls[0].body);
     expect(sent.model).toBe("test/model");
     expect(sent.stream).toBe(true);
@@ -185,7 +185,7 @@ describe.skipIf(!DB_URL)("runs", () => {
     apps.push(app);
     const { cookie } = await signIn(app);
     const res = await app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload: RUN });
-    expect(events(res.body)).toEqual([{ t: "start", cost: 5, balance: 95 }, { t: "error", balance: 100, message: expect.stringContaining("refunded") }]);
+    expect(events(res.body)).toEqual([{ t: "start", runId: expect.any(String), cost: 5, balance: 95, rateable: false }, { t: "error", balance: 100, message: expect.stringContaining("refunded") }]);
     const status = await app.inject({ method: "GET", url: "/runs/status", headers: { cookie } });
     expect(status.json().usedToday).toBe(0);
   });
@@ -243,7 +243,7 @@ describe.skipIf(!DB_URL)("credits", () => {
     const { cookie } = await signIn(app);
     const go = (payload: object) => app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload });
     const ok = await go({ source: "example", exampleId: "m1", skillId: "research", task: "TSLA" });
-    expect(events(ok.body)[0]).toEqual({ t: "start", cost: 15, balance: 85 });
+    expect(events(ok.body)[0]).toMatchObject({ t: "start", cost: 15, balance: 85 });
     expect((await go({ source: "example", exampleId: "nope", skillId: "research", task: "x" })).statusCode).toBe(404);
     expect((await go({ source: "example", exampleId: "m1", skillId: "code", task: "x" })).statusCode).toBe(400);
   });
@@ -267,5 +267,153 @@ describe.skipIf(!DB_URL)("credits", () => {
     expect((await me(app, cookie)).balance).toBe(100);
     expect((await db.run.findFirstOrThrow()).status).toBe("REFUNDED");
     expect(await reconcile(db)).toEqual([]);
+  });
+});
+
+const creatorAcct = privateKeyToAccount("0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a");
+const CHAR = { kind: "human", skin: "#F6D2B8", hair: "buns", hairC: "#FF8FB8", eyeC: "#7C5CFF", mouth: "smile", blush: true, freckles: false, lashes: true, top: "hoodie", topC: "#8B7CFF", bottomC: "#2B2456", shoeC: "#F5F3FF", accC: "#6EF0D2", glow: "#FF8FB8", hat: "none", glasses: "none", back: "none", buddy: true, legs: "legs" };
+const NEW_AGENT = { baseId: "juni", name: "Thread Bot", instructions: "SECRET-RULES", tone: "Friendly", lang: "English", skills: ["writer"], price: 20, character: CHAR };
+
+describe.skipIf(!DB_URL)("agents", () => {
+  async function creatorWithAgent(app: ReturnType<typeof setup>["app"], publish = true) {
+    const { cookie } = await signIn(app, "mochibo.studio", creatorAcct);
+    const created = await app.inject({ method: "POST", url: "/agents", headers: { origin: ORIGIN, cookie }, payload: NEW_AGENT });
+    expect(created.statusCode).toBe(201);
+    const agent = created.json().agent;
+    if (publish) await app.inject({ method: "POST", url: `/agents/${agent.id}/publish`, headers: { origin: ORIGIN, cookie }, payload: { published: true, price: 20 } });
+    return { cookie, agent };
+  }
+
+  it("saves, autosaves, lists and deletes the owner's agents", async () => {
+    const { app } = setup();
+    apps.push(app);
+    const { cookie, agent } = await creatorWithAgent(app, false);
+    const patched = await app.inject({ method: "PATCH", url: `/agents/${agent.id}`, headers: { origin: ORIGIN, cookie }, payload: { name: "Thread Bot 2", character: { ...CHAR, hair: "long" } } });
+    expect(patched.json().agent).toMatchObject({ name: "Thread Bot 2", instructions: "SECRET-RULES" });
+    expect(patched.json().agent.character.hair).toBe("long");
+    expect((await app.inject({ method: "PATCH", url: `/agents/${agent.id}`, headers: { origin: ORIGIN, cookie }, payload: { evil: 1 } })).statusCode).toBe(400);
+    const mine = (await app.inject({ method: "GET", url: "/agents/mine", headers: { cookie } })).json().agents;
+    expect(mine).toHaveLength(1);
+    // Someone else cannot touch it.
+    const { cookie: other } = await signIn(app);
+    expect((await app.inject({ method: "PATCH", url: `/agents/${agent.id}`, headers: { origin: ORIGIN, cookie: other }, payload: { name: "x" } })).statusCode).toBe(404);
+    await app.inject({ method: "DELETE", url: `/agents/${agent.id}`, headers: { origin: ORIGIN, cookie } });
+    expect((await app.inject({ method: "GET", url: "/agents/mine", headers: { cookie } })).json().agents).toHaveLength(0);
+  });
+
+  it("publishes to Discover and the public page without the instructions", async () => {
+    const { app } = setup();
+    apps.push(app);
+    const { agent } = await creatorWithAgent(app);
+    const page = await app.inject({ method: "GET", url: `/a/${agent.slug}` });
+    expect(page.statusCode).toBe(200);
+    expect(page.body).not.toContain("SECRET-RULES");
+    expect(page.json().agent).toMatchObject({ name: "Thread Bot", price: 20, creator: creatorAcct.address.toLowerCase() });
+    const list = (await app.inject({ method: "GET", url: "/discover?cat=Writing" })).json().agents;
+    expect(list.map((a: { slug: string }) => a.slug)).toEqual([agent.slug]);
+    expect((await app.inject({ method: "GET", url: "/discover?cat=Code" })).json().agents).toHaveLength(0);
+    expect(JSON.stringify(list)).not.toContain("SECRET-RULES");
+  });
+
+  it("pays the creator the price minus the 5% fee, and the runner can rate once", async () => {
+    const calls: { body: string }[] = [];
+    const { app } = setup({}, fakeProvider(["Gm ", "fam"], { calls }));
+    apps.push(app);
+    const { cookie: creatorCookie, agent } = await creatorWithAgent(app);
+    const { cookie } = await signIn(app);
+    const res = await app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload: { source: "agent", agentId: agent.id, skillId: "writer", task: "Tweet please" } });
+    const start = events(res.body)[0];
+    expect(start).toMatchObject({ t: "start", cost: 20, balance: 80, rateable: true });
+    expect(JSON.parse(calls[0].body).messages[0].content).toContain("SECRET-RULES");
+    const creatorMe = (await app.inject({ method: "GET", url: "/me", headers: { cookie: creatorCookie } })).json();
+    expect(creatorMe.balance).toBe(119);
+    const run = await db.run.findUniqueOrThrow({ where: { id: start.runId } });
+    expect(run).toMatchObject({ status: "DONE", cost: 2000n, fee: 100n, creatorNet: 1900n, agentId: agent.id });
+    const rate = (stars: number) => app.inject({ method: "POST", url: `/runs/${start.runId}/rating`, headers: { origin: ORIGIN, cookie }, payload: { stars } });
+    expect((await rate(5)).statusCode).toBe(200);
+    expect((await rate(4)).statusCode).toBe(409);
+    expect((await app.inject({ method: "GET", url: `/a/${agent.slug}` })).json().agent).toMatchObject({ runsCount: 1, rating: 5, ratingCount: 1 });
+    expect(await reconcile(db)).toEqual([]);
+    const stats = (await app.inject({ method: "GET", url: "/stats" })).json();
+    expect(stats).toMatchObject({ agents: 1, runs: 1, paidToCreators: 19 });
+    expect(stats.recent[0]).toMatchObject({ earned: 19, agent: { slug: agent.slug } });
+    const board = (await app.inject({ method: "GET", url: "/leaderboard" })).json().creators;
+    expect(board[0]).toMatchObject({ wallet: creatorAcct.address.toLowerCase(), earned: 19, runs: 1 });
+  });
+
+  it("charges a studio run for your own agent and pays nobody", async () => {
+    const { app } = setup();
+    apps.push(app);
+    const { cookie, agent } = await creatorWithAgent(app);
+    const res = await app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload: { source: "agent", agentId: agent.id, skillId: "writer", task: "Hi" } });
+    expect(events(res.body)[0]).toMatchObject({ cost: 5, balance: 95 });
+    expect(await db.ledgerEntry.count({ where: { type: "RUN_CREDIT" } })).toBe(0);
+  });
+
+  it("does not run an unpublished agent for someone else", async () => {
+    const { app } = setup();
+    apps.push(app);
+    const { agent } = await creatorWithAgent(app, false);
+    const { cookie } = await signIn(app);
+    const res = await app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload: { source: "agent", agentId: agent.id, skillId: "writer", task: "Hi" } });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it("stores a PNG portrait and rejects anything else", async () => {
+    const dir = await import("node:fs/promises").then((fs) => fs.mkdtemp("/tmp/mochibo-up-"));
+    const { app } = setup({ UPLOAD_DIR: dir });
+    apps.push(app);
+    const { cookie, agent } = await creatorWithAgent(app);
+    const png = Buffer.from("89504e470d0a1a0a0000000d4948445200000001000000010806000000", "hex");
+    const ok = await app.inject({ method: "POST", url: `/agents/${agent.id}/thumbnail`, headers: { origin: ORIGIN, cookie }, payload: { image: `data:image/png;base64,${png.toString("base64")}` } });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.json().agent.thumbnailUrl).toMatch(/^\/uploads\/[0-9a-f]{32}\.png$/);
+    const fake = await app.inject({ method: "POST", url: `/agents/${agent.id}/thumbnail`, headers: { origin: ORIGIN, cookie }, payload: { image: `data:image/png;base64,${Buffer.from("<svg>").toString("base64")}` } });
+    expect(fake.statusCode).toBe(400);
+  });
+
+  it("sends earlier turns of the chat to the AI", async () => {
+    const calls: { body: string }[] = [];
+    const { app } = setup({}, fakeProvider(["ok"], { calls }));
+    apps.push(app);
+    const { cookie } = await signIn(app);
+    await app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload: { ...RUN, task: "Shorter", history: [{ task: "Write a post", answer: "A long post" }] } });
+    const msgs = JSON.parse(calls[0].body).messages;
+    expect(msgs.slice(1)).toEqual([
+      { role: "user", content: "Write a post" },
+      { role: "assistant", content: "A long post" },
+      { role: "user", content: "Shorter" },
+    ]);
+  });
+});
+
+describe.skipIf(!DB_URL)("links in a run", () => {
+  it("reads the linked page and gives it to the AI", async () => {
+    const http = await import("node:http");
+    const server = http.createServer((_q, r) => {
+      r.writeHead(200, { "Content-Type": "text/html" });
+      r.end("<title>Whitepaper</title><p>Total supply: 1,000,000,000.</p>");
+    });
+    await new Promise<void>((ok) => server.listen(0, "127.0.0.1", ok));
+    const url = `http://127.0.0.1:${(server.address() as { port: number }).port}/wp`;
+    const calls: { body: string }[] = [];
+    const { app } = setup({ NODE_ENV: "test", UNSAFE_ALLOW_PRIVATE_LINKS: "true" }, fakeProvider(["ok"], { calls }));
+    apps.push(app);
+    const { cookie } = await signIn(app);
+    const res = await app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload: { ...RUN, task: `Summarize ${url}` } });
+    server.close();
+    expect(events(res.body)[1]).toEqual({ t: "status", text: "Reading the link…" });
+    const user = JSON.parse(calls[0].body).messages.at(-1).content;
+    expect(user).toContain("Total supply: 1,000,000,000.");
+    expect(user).toContain("(Whitepaper)");
+  });
+
+  it("never opens local addresses outside tests", async () => {
+    const calls: { body: string }[] = [];
+    const { app } = setup({ NODE_ENV: "production", UNSAFE_ALLOW_PRIVATE_LINKS: "true" }, fakeProvider(["ok"], { calls }));
+    apps.push(app);
+    const { cookie } = await signIn(app);
+    await app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload: { ...RUN, task: "Read http://127.0.0.1:4000/health" } });
+    expect(JSON.parse(calls[0].body).messages.at(-1).content).toContain("that address is not public");
   });
 });

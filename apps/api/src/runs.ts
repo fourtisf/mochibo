@@ -12,8 +12,10 @@
  */
 import type { FastifyInstance } from "fastify";
 import type { PrismaClient } from "@prisma/client";
-import { EXAMPLE_BY_ID, PreviewRunSchema, type Persona, type SkillId } from "@orbis/shared";
+import { EXAMPLE_BY_ID, PreviewRunSchema, TIERS, type Persona, type SkillId } from "@orbis/shared";
+import { toneFromDb } from "./agents";
 import { ProviderError, streamChat, systemPrompt } from "./ai";
+import { findLinks, readLinks, withLinks } from "./links";
 import { allow, sessionAddress } from "./auth";
 import type { Env } from "./env";
 import { InsufficientCredits, applyChange, cr, ensureUser, toCr } from "./ledger";
@@ -26,7 +28,7 @@ export function runRoutes(app: FastifyInstance, env: Env, store: Store, db: Pris
   app.get("/runs/status", async (req) => {
     const address = await sessionAddress(store, req);
     const used = address ? Number((await store.get(`runs:${address}:${day()}`)) ?? 0) : 0;
-    return { live: env.aiReady, signedIn: Boolean(address), perDay: env.RUNS_PER_WALLET_PER_DAY, usedToday: Math.min(used, env.RUNS_PER_WALLET_PER_DAY), studioCost: env.RUN_COST_CR };
+    return { live: env.aiReady, signedIn: Boolean(address), perDay: env.RUNS_PER_WALLET_PER_DAY, usedToday: Math.min(used, env.RUNS_PER_WALLET_PER_DAY), studioCost: env.RUN_COST_CR, webSearch: env.ENABLE_WEB_SEARCH };
   });
 
   app.post("/runs", async (req, reply) => {
@@ -39,10 +41,26 @@ export function runRoutes(app: FastifyInstance, env: Env, store: Store, db: Pris
 
     // Who is answering, and what it costs. The browser never sets the price.
     let persona: Persona, price: number, source: string;
+    /** Set when a stored agent runs: its id and the creator to pay (null for your own agent). */
+    let agentId: string | null = null;
+    let creatorId: string | null = null;
+    const runner = await ensureUser(db, address, env.WELCOME_CREDITS);
     if (r.source === "studio") {
       persona = r.agent;
       price = env.RUN_COST_CR;
       source = "studio";
+    } else if (r.source === "agent") {
+      const a = await db.agent.findFirst({ where: { id: r.agentId, deletedAt: null, OR: [{ published: true }, { ownerId: runner.id }] } });
+      if (!a) return reply.code(404).send({ error: "not_found", message: "That agent does not exist or is not published." });
+      persona = { name: a.name, instructions: a.instructions, tone: toneFromDb(a.tone), lang: "English", skills: a.skills as SkillId[] };
+      agentId = a.id;
+      source = "agent";
+      // Running your own agent costs a studio run and pays nobody; anyone else pays its price.
+      if (a.ownerId === runner.id) price = env.RUN_COST_CR;
+      else {
+        price = a.price;
+        creatorId = a.ownerId;
+      }
     } else {
       const ex = EXAMPLE_BY_ID[r.exampleId];
       if (!ex) return reply.code(404).send({ error: "not_found", message: "That agent does not exist." });
@@ -82,9 +100,9 @@ export function runRoutes(app: FastifyInstance, env: Env, store: Store, db: Pris
     let run: { id: string };
     let balance: bigint;
     try {
-      const user = await ensureUser(db, address, env.WELCOME_CREDITS);
+      const user = runner;
       ({ run, balance } = await db.$transaction(async (tx) => {
-        const created = await tx.run.create({ data: { runnerId: user.id, source, skillId: r.skillId, status: "RUNNING", cost } });
+        const created = await tx.run.create({ data: { runnerId: user.id, agentId, source, skillId: r.skillId, status: "RUNNING", cost } });
         const entry =
           cost > 0n
             ? await applyChange(tx, { userId: user.id, amount: -cost, type: "RUN_DEBIT", key: `run:${created.id}:debit`, refType: "run", refId: created.id, memo: `Ran ${persona.name}` })
@@ -120,20 +138,40 @@ export function runRoutes(app: FastifyInstance, env: Env, store: Store, db: Pris
       "X-Accel-Buffering": "no",
     });
     const send = (data: object) => reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
-    send({ t: "start", cost: price, balance: toCr(balance) });
+    send({ t: "start", runId: run.id, cost: price, balance: toCr(balance), rateable: Boolean(agentId) });
     const started = Date.now();
     let chars = 0;
     try {
-      const events = streamChat(env, { system: systemPrompt(persona, r.skillId, webSearch), user: r.task, webSearch, signal: ctrl.signal }, fetchImpl);
+      // Links in the task: read the pages first so the agent can work from them.
+      let userMessage = r.task;
+      const linkCount = findLinks(r.task).length;
+      if (linkCount) {
+        send({ t: "status", text: linkCount === 1 ? "Reading the link…" : `Reading ${linkCount} links…` });
+        userMessage = withLinks(r.task, await readLinks(r.task, { allowPrivate: env.NODE_ENV === "test" && env.UNSAFE_ALLOW_PRIVATE_LINKS }));
+      }
+      const events = streamChat(env, { system: systemPrompt(persona, r.skillId, webSearch), user: userMessage, history: r.history, webSearch, signal: ctrl.signal }, fetchImpl);
       for await (const ev of events) {
         if (ev.type === "delta") {
           chars += ev.text.length;
           send({ t: "delta", text: ev.text });
         } else {
           if (!chars) throw new ProviderError("Empty answer");
-          await db.run.update({
-            where: { id: run.id },
-            data: { status: "DONE", model: ev.model, tokensIn: ev.usage?.promptTokens, tokensOut: ev.usage?.completionTokens, finishedAt: new Date() },
+          // Done: pay the creator the price minus the platform fee for their tier (CLAUDE.md 5.3, 5.8).
+          await db.$transaction(async (tx) => {
+            let creatorNet = 0n;
+            let fee = 0n;
+            if (creatorId && cost > 0n) {
+              const creator = await tx.user.findUniqueOrThrow({ where: { id: creatorId }, select: { tier: true } });
+              const feeBps = BigInt((TIERS.find((t) => t.id === creator.tier) ?? TIERS[0]).feeBps);
+              fee = (cost * feeBps) / 10_000n;
+              creatorNet = cost - fee;
+              await applyChange(tx, { userId: creatorId, amount: creatorNet, type: "RUN_CREDIT", key: `run:${run.id}:credit`, refType: "run", refId: run.id, memo: `Earned: ${persona.name}` });
+            }
+            await tx.run.update({
+              where: { id: run.id },
+              data: { status: "DONE", model: ev.model, tokensIn: ev.usage?.promptTokens, tokensOut: ev.usage?.completionTokens, finishedAt: new Date(), creatorNet, fee },
+            });
+            if (agentId) await tx.agent.update({ where: { id: agentId }, data: { runsCount: { increment: 1 }, earnedTotal: { increment: creatorNet } } });
           });
           send({ t: "done", balance: toCr(balance) });
           // Never log the task, the instructions or the answer.

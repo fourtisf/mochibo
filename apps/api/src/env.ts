@@ -31,6 +31,8 @@ const EnvSchema = z.object({
   REDIS_URL: z.string().default(""),
   /** PostgreSQL for users and the credits ledger. */
   DATABASE_URL: z.string().default(""),
+  /** Where agent portraits are written; Nginx serves this folder at /uploads. */
+  UPLOAD_DIR: z.string().default("/var/www/mochibo-uploads"),
   /** One-time free credits for a new wallet. */
   WELCOME_CREDITS: int(ECONOMICS.previewStartCr),
   /** Price of a studio run of your own agent, in whole CR. */
@@ -44,7 +46,7 @@ const EnvSchema = z.object({
   OPENROUTER_BASE_URL: z.string().url().default("https://openrouter.ai/api/v1"),
   /** OpenRouter model id, for example "provider/model-name". Pick it at openrouter.ai/models. */
   AI_MODEL: z.string().default(""),
-  AI_MAX_TOKENS: int(700),
+  AI_MAX_TOKENS: int(1200),
   AI_TIMEOUT_MS: int(60000),
   /** Gives the Web research skill OpenRouter's web search (paid per request). */
   ENABLE_WEB_SEARCH: bool(false),
@@ -55,6 +57,8 @@ const EnvSchema = z.object({
   /** Live runs across all wallets per UTC day. When reached, runs pause until midnight UTC. */
   RUNS_PER_DAY_TOTAL: int(500),
   SESSION_DAYS: int(7),
+  /** Tests only (ignored unless NODE_ENV=test): let the link reader open local addresses. */
+  UNSAFE_ALLOW_PRIVATE_LINKS: bool(false),
 });
 
 export type Env = z.infer<typeof EnvSchema> & {

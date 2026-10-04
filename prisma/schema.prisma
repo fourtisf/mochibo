@@ -80,6 +80,8 @@ model Agent {
   slug         String    @unique
   ownerId      String
   owner        User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  // Base character the look started from (one of the 12), for the studio roster and the role label.
+  baseId       String    @default("juni") @db.VarChar(20)
   name         String    @db.VarChar(32)
   instructions String    @db.VarChar(2000) // private: owner and AI provider only
   tone         Tone      @default(FRIENDLY)
@@ -96,6 +98,8 @@ model Agent {
   ratingCount  Int       @default(0)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  // Deleting hides the agent; runs and earnings keep their history.
+  deletedAt    DateTime?
   runs         Run[]
   ratings      Rating[]
 

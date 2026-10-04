@@ -2,6 +2,7 @@
 import cookie from "@fastify/cookie";
 import type { PrismaClient } from "@prisma/client";
 import Fastify, { type FastifyInstance } from "fastify";
+import { agentRoutes } from "./agents";
 import { authRoutes, sessionAddress } from "./auth";
 import type { Env } from "./env";
 import { toCr } from "./ledger";
@@ -37,7 +38,13 @@ export function buildApp({ env, store, db, fetchImpl = fetch, logger = true }: A
     if (!env.appOrigins.includes(req.headers.origin ?? "")) return reply.code(403).send({ error: "forbidden", message: "Requests must come from the Mochibo site." });
   });
 
-  app.get("/health", async () => ({ ok: true }));
+  // Health: the API process, PostgreSQL and Redis must all answer.
+  app.get("/health", async (_req, reply) => {
+    const db_ = await db.$queryRaw`SELECT 1`.then(() => true).catch(() => false);
+    const redis = await store.get("health").then(() => true).catch(() => false);
+    const ok = db_ && redis;
+    return reply.code(ok ? 200 : 503).send({ ok, db: db_, redis });
+  });
   app.get("/me", async (req, reply) => {
     reply.header("Cache-Control", "no-store");
     const address = await sessionAddress(store, req);
@@ -60,6 +67,7 @@ export function buildApp({ env, store, db, fetchImpl = fetch, logger = true }: A
     return { entries: entries.map((e) => ({ ...e, amount: toCr(e.amount), balanceAfter: toCr(e.balanceAfter) })) };
   });
   authRoutes(app, env, store, db);
+  agentRoutes(app, env, store, db);
   runRoutes(app, env, store, db, fetchImpl);
   return app;
 }
