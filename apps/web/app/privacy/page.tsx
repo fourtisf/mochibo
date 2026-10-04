@@ -28,6 +28,10 @@ export default function Privacy() {
           do not log them.
         </li>
         <li>Our server keeps standard technical logs (such as IP address, browser and pages requested) to keep the site running and secure.</li>
+        <li>
+          Talking to your agent with the mic uses your browser&apos;s speech recognition. Mochibo receives only the text. Some browsers, such as Chrome and Edge, send the audio to their own
+          speech service to turn it into text. Spoken answers are made by your browser on your device.
+        </li>
         <li>We do not use advertising trackers and we do not sell personal data.</li>
       </ul>
 

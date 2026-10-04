@@ -281,6 +281,47 @@ kbd {
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* push-to-talk mic */
+.mic {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  color: var(--ink2);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+}
+.mic:hover {
+  color: var(--ink);
+}
+.mic.on {
+  color: #1a1440;
+  background: var(--aqua);
+  border-color: transparent;
+  animation: micPulse 1.2s var(--ease) infinite;
+}
+.mic:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+@keyframes micPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(110, 240, 210, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 12px rgba(110, 240, 210, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mic.on {
+    animation: none;
+  }
+}
+.mic-note {
+  font-size: 12px;
+  color: var(--ink3);
+  margin-top: 8px;
+}
+
 /* power dock (hero and studio) */
 .dock {
   display: flex;

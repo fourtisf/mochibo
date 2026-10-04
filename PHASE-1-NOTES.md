@@ -303,3 +303,11 @@ Changes to the draft schema:
 - **Rename in place.** Click the agent's name (with the pencil) in the studio bar to rename it. Enter or clicking away saves, Escape cancels. The Name field in the Mind tab still works too.
 - **Custom names stick.** Picking another character only renames the agent if it still has the default name ("My Juni" becomes "My Pip"); a name you chose is kept.
 - **The link follows the name.** The public link (`/a/<name>-<6 hex>`) is made from the name at the first publish. After that it stays the same, so links already shared keep working after a rename. Covered by an API test.
+
+## Update: talk to your agent (voice)
+
+- **Mic button** in the studio console and in the run modal (Discover and share pages). Tap it and speak: the words fill the task box as you talk, and the run starts when you stop. Tap again to send early.
+- In the studio the character reacts (waves, looks surprised while listening, happy when it heard you) and reads the answer aloud with the speech bubble, as before.
+- Uses the browser's speech recognition (`apps/web/lib/listen.ts`), free and keyless. Chrome, Edge and Safari support it; the button hides where it is missing (Firefox). Chrome and Edge transcribe on their own speech service, which the Privacy page now says. `Permissions-Policy` allows the microphone for the site itself only.
+- Clear messages when the mic is blocked, missing, or nothing was heard.
+- **Mobile fix (old bug):** on phones the studio's tab row and motion chips forced the studio 89 px wider than the screen, cutting off the Publish tab and the Run button. The grid columns are now `minmax(0, 1fr)` so those rows scroll instead.

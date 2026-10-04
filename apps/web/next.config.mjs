@@ -30,7 +30,7 @@ const security = [
   { key: "Content-Security-Policy-Report-Only", value: csp },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(), payment=(), usb=()" },
   { key: "Strict-Transport-Security", value: "max-age=15552000" },
 ];
 

@@ -9,7 +9,9 @@ import { clamp } from "@/lib/format";
 import { usePreview } from "@/lib/preview/store";
 import { useRun } from "@/lib/preview/run";
 import { useStages } from "@/lib/stages";
-import { setVoiceOn, useVoiceOn } from "@/lib/talk";
+import { setVoiceOn, unlockSpeech, useVoiceOn } from "@/lib/talk";
+import { useListener } from "@/lib/listen";
+import { MicButton } from "@/components/MicButton";
 import { authActions, useAuth } from "@/lib/auth";
 import { useToast } from "@/lib/toast";
 import { CharacterPane, GearPane, MindPane, PublishPane, SkillsPane, StylePane } from "./Panes";
@@ -304,13 +306,33 @@ function Console() {
     if (!agent.skills.includes(skill as never)) setSkill(agent.skills[0] ?? "");
   }, [agent.skills, skill]);
 
-  const go = () =>
+  const go = (t = task) =>
     run({
       skillId: skill,
-      task,
+      task: t,
       source: { kind: "studio", persona: { name: agent.name, instructions: agent.instructions, tone: agent.tone, lang: agent.lang, skills: agent.skills } },
       stage: stages.get("studio"),
     });
+
+  // Talk to the agent: what you say fills the task box, and the run starts when you stop talking.
+  const mic = useListener({
+    onText: setTask,
+    onFinal: (text) => {
+      stages.get("studio")?.main?.setExpression("happy", 1.2);
+      void go(text);
+    },
+  });
+  const talk = () => {
+    if (signedOut) return authActions.openSignIn();
+    if (mic.listening) return mic.stop();
+    unlockSpeech(); // still inside the tap, so the answer can be read aloud on phones
+    const actor = stages.get("studio")?.main;
+    if (actor) {
+      actor.play("wave");
+      actor.setExpression("surprised", 0.8);
+    }
+    mic.start();
+  };
 
   return (
     <div className={s.console}>
@@ -330,7 +352,7 @@ function Console() {
           ref={taskRef}
           rows={1}
           aria-label="Task"
-          placeholder={turns.length ? "Ask a follow-up…" : "Ask your agent to do something…"}
+          placeholder={mic.listening ? "Listening…" : turns.length ? "Ask a follow-up…" : "Ask your agent to do something…"}
           value={task}
           onChange={(e) => setTask(e.target.value)}
           onKeyDown={(e) => {
@@ -340,7 +362,8 @@ function Console() {
             }
           }}
         />
-        <button className={`btn btn-primary${signedOut ? ` ${s.connectBtn}` : ""}`} onClick={signedOut ? () => authActions.openSignIn() : go} disabled={busy}>
+        <MicButton supported={mic.supported && !signedOut} listening={mic.listening} disabled={busy} onClick={talk} />
+        <button className={`btn btn-primary${signedOut ? ` ${s.connectBtn}` : ""}`} onClick={signedOut ? () => authActions.openSignIn() : () => go()} disabled={busy}>
           {busy ? "Working…" : signedOut ? "Connect wallet to run" : "Run"}
         </button>
       </div>
@@ -351,8 +374,11 @@ function Console() {
           taskRef.current?.focus();
         }}
       />
+      {mic.error && <div className="mic-note">{mic.error}</div>}
       <div className={s.conMeta}>
-        <span>{ECONOMICS.runCostCr} CR per run</span>
+        <span>
+          {ECONOMICS.runCostCr} CR per run{mic.supported && !signedOut ? " · tap the mic to talk" : ""}
+        </span>
         <span>
           <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to run
         </span>

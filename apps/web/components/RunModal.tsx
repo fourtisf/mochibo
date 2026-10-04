@@ -4,6 +4,8 @@ import { SKILL_BY_ID, type Language, type SkillId, type Tone } from "@orbis/shar
 import { CloseIcon } from "@/lib/icons";
 import { authActions, useAuth } from "@/lib/auth";
 import { useRun } from "@/lib/preview/run";
+import { useListener } from "@/lib/listen";
+import { MicButton } from "./MicButton";
 import { Portrait } from "./Portrait";
 import { RunOutput } from "./RunOutput";
 import { TryChips } from "./TryChips";
@@ -48,8 +50,30 @@ export function RunModal({ target, onClose }: { target: RunTarget | null; onClos
   }, [target, reset]);
 
   const close = () => {
+    mic.stop();
     ref.current?.close();
   };
+
+  const go = (t = task) => {
+    if (!target) return;
+    if (signedOut) {
+      // The wallet modal cannot show above an open <dialog>, so close this first.
+      close();
+      authActions.openSignIn();
+      return;
+    }
+    run({
+      skillId: skill,
+      task: t,
+      source: target.agentId
+        ? { kind: "agent", id: target.agentId }
+        : target.exampleId
+          ? { kind: "example", id: target.exampleId }
+          : { kind: "studio", persona: { name: target.name, instructions: target.instructions, tone: target.tone, lang: target.lang, skills: target.skills } },
+    });
+  };
+  // Talk instead of typing: the run starts when you stop talking.
+  const mic = useListener({ onText: setTask, onFinal: (text) => go(text) });
 
   return (
     <dialog
@@ -84,32 +108,16 @@ export function RunModal({ target, onClose }: { target: RunTarget | null; onClos
             </div>
             <div className="field">
               <div className="lbl">Task</div>
-              <textarea className="input" aria-label="Task" placeholder={turns.length ? "Ask a follow-up" : "Describe what you need"} value={task} onChange={(e) => setTask(e.target.value)} />
+              <textarea className="input" aria-label="Task" placeholder={mic.listening ? "Listening…" : turns.length ? "Ask a follow-up" : "Describe what you need"} value={task} onChange={(e) => setTask(e.target.value)} />
               <TryChips skillId={skill} onPick={setTask} />
             </div>
-            <button
-              className="btn btn-primary btn-block"
-              disabled={busy}
-              onClick={() => {
-                if (signedOut) {
-                  // The wallet modal cannot show above an open <dialog>, so close this first.
-                  close();
-                  authActions.openSignIn();
-                  return;
-                }
-                run({
-                  skillId: skill,
-                  task,
-                  source: target.agentId
-                    ? { kind: "agent", id: target.agentId }
-                    : target.exampleId
-                      ? { kind: "example", id: target.exampleId }
-                      : { kind: "studio", persona: { name: target.name, instructions: target.instructions, tone: target.tone, lang: target.lang, skills: target.skills } },
-                });
-              }}
-            >
-              {busy ? "Working…" : signedOut ? "Connect wallet to run" : target.price ? `Run for ${target.price} CR` : "Run for free"}
-            </button>
+            <div className={s.runRow}>
+              <MicButton supported={mic.supported && !signedOut} listening={mic.listening} disabled={busy} onClick={() => (mic.listening ? mic.stop() : mic.start())} />
+              <button className="btn btn-primary btn-block" disabled={busy} onClick={() => go()}>
+                {busy ? "Working…" : signedOut ? "Connect wallet to run" : target.price ? `Run for ${target.price} CR` : "Run for free"}
+              </button>
+            </div>
+            {mic.error && <div className="mic-note">{mic.error}</div>}
             <RunOutput out={out} turns={turns} onNewChat={reset} style={{ maxHeight: 300 }} />
           </div>
         </>

@@ -154,3 +154,11 @@
     grid-template-columns: 1fr;
   }
 }
+.runRow {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.runRow :global(.btn-block) {
+  flex: 1;
+}

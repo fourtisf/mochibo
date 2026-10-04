@@ -343,6 +343,7 @@
 /* stage column */
 .stageCol {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 1fr auto;
   min-height: 0;
 }
@@ -460,6 +461,7 @@
 }
 .conIn textarea {
   flex: 1;
+  min-width: 0;
   border: 0;
   background: transparent;
   resize: none;
@@ -495,7 +497,8 @@
     height: auto;
   }
   .body {
-    grid-template-columns: 1fr;
+    /* minmax(0, …): the tab row scrolls instead of widening the studio past the screen. */
+    grid-template-columns: minmax(0, 1fr);
   }
   .rail {
     flex-direction: row;
