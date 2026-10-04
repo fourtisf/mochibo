@@ -4,6 +4,7 @@
 #
 #   1. A private Redis instance for Mochibo (redis-server@mochibo), localhost only, with a password.
 #      An existing Redis used by other apps is left alone.
+#   1b. PostgreSQL with a "mochibo" role and database (other databases on the server are untouched).
 #   2. A free local port for the API, stored in deploy/.api-port.
 #   3. /home/mochibo/api.env, the API's secret settings (readable by the app user only).
 #      Values you set yourself (OpenRouter key, model, limits) are kept.
@@ -55,6 +56,29 @@ done
 redis-cli -p "$REDIS_PORT" -a "$REDIS_PASS" --no-auth-warning ping | grep -q PONG || { echo "Redis is not answering on port $REDIS_PORT. Check: journalctl -u redis-server@mochibo"; exit 1; }
 echo "    redis-server@mochibo on 127.0.0.1:$REDIS_PORT"
 
+echo "==> PostgreSQL (database for users and credits)"
+if ! ls /usr/lib/postgresql/*/bin/postgres >/dev/null 2>&1; then
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get -o DPkg::Lock::Timeout=600 install -y postgresql
+fi
+systemctl enable --now postgresql >/dev/null 2>&1 || systemctl start postgresql
+for _ in 1 2 3 4 5 6 7 8 9 10; do sudo -u postgres psql -tAc "SELECT 1" >/dev/null 2>&1 && break; sleep 1; done
+PG_PORT="$(sudo -u postgres psql -tAc "SHOW port" | tr -d '[:space:]')"
+DB_PASS_FILE="/home/$APP_USER/.mochibo-db-password"
+if [ ! -s "$DB_PASS_FILE" ]; then
+  openssl rand -hex 24 > "$DB_PASS_FILE"
+fi
+chown "$APP_USER:$APP_USER" "$DB_PASS_FILE"; chmod 600 "$DB_PASS_FILE"
+DB_PASS="$(cat "$DB_PASS_FILE")"
+if sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='mochibo'" | grep -q 1; then
+  sudo -u postgres psql -q -c "ALTER ROLE mochibo WITH LOGIN PASSWORD '$DB_PASS'"
+else
+  sudo -u postgres psql -q -c "CREATE ROLE mochibo WITH LOGIN PASSWORD '$DB_PASS'"
+fi
+sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='mochibo'" | grep -q 1 || sudo -u postgres psql -q -c "CREATE DATABASE mochibo OWNER mochibo"
+DATABASE_URL="postgresql://mochibo:$DB_PASS@127.0.0.1:$PG_PORT/mochibo"
+echo "    database mochibo on 127.0.0.1:$PG_PORT"
+
 echo "==> API port"
 PORT_FILE="$APP_DIR/deploy/.api-port"
 API_PORT="$(cat "$PORT_FILE" 2>/dev/null || true)"
@@ -90,10 +114,15 @@ CHAIN_ID=
 # Optional RPC, only needed to sign in with smart-contract wallets
 RPC_URL=
 
+# One-time free credits for a new wallet, and the price of a studio run (whole CR)
+WELCOME_CREDITS=100
+RUN_COST_CR=5
+
 # Managed by deploy/api-setup.sh
 NODE_ENV=production
 APP_URL=https://$DOMAIN
 REDIS_URL=redis://:$REDIS_PASS@127.0.0.1:$REDIS_PORT
+DATABASE_URL=$DATABASE_URL
 ENV
 else
   # Keep the owner's values; refresh only the lines this script manages.
@@ -108,6 +137,7 @@ else
   set_key NODE_ENV production
   set_key APP_URL "https://$DOMAIN"
   set_key REDIS_URL "redis://:$REDIS_PASS@127.0.0.1:$REDIS_PORT"
+  set_key DATABASE_URL "$DATABASE_URL"
 fi
 chown "$APP_USER:$APP_USER" "$ENV_FILE"
 chmod 600 "$ENV_FILE"
@@ -117,6 +147,14 @@ else
   echo "    OpenRouter key or model is still empty: runs say live answers are not switched on yet."
   echo "    Add them to $ENV_FILE (see deploy/README.md)."
 fi
+
+echo "==> Nightly ledger check (cron, 03:17 server time)"
+cat > /etc/cron.d/mochibo-reconcile <<CRON
+# Mochibo: cached balances must match the credits ledger (written by deploy/api-setup.sh).
+# Results go to /home/$APP_USER/reconcile.log; a mismatch is logged as MISMATCH.
+17 3 * * * $APP_USER cd $APP_DIR && /opt/mochibo-node/bin/node --env-file=$ENV_FILE apps/api/dist/reconcile.cjs >> /home/$APP_USER/reconcile.log 2>&1
+CRON
+chmod 644 /etc/cron.d/mochibo-reconcile
 
 echo "==> Nginx route /api"
 mkdir -p /etc/nginx/snippets

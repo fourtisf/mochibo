@@ -17,14 +17,19 @@
     "render:characters": "pnpm --filter @orbis/characters render"
   },
   "devDependencies": {
+    "@prisma/client": "6.19.3",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
     "eslint": "^8.57.1",
-    "playwright-core": "1.56.1"
+    "playwright-core": "1.56.1",
+    "prisma": "6.19.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "esbuild"
+      "esbuild",
+      "prisma",
+      "@prisma/client",
+      "@prisma/engines"
     ]
   }
 }

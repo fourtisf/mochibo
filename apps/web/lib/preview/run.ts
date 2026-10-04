@@ -1,17 +1,15 @@
 "use client";
 /**
  * Run flow: POST /api/runs and stream the live answer (Server-Sent Events) into the output while
- * the character animates. The wallet must be signed in; the API enforces the daily limits.
- * Preview credits are still the in-browser balance (store.tsx) until the ledger exists in phase 3:
- * they are debited only after the API accepts the run and refunded if the run fails.
+ * the character animates and talks. The wallet must be signed in. The API prices the run, debits
+ * the credits, enforces the daily limits and refunds failed runs; the stream reports the balance.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SKILL_BY_ID, isSkillId, type PreviewRun } from "@orbis/shared";
+import { SKILL_BY_ID, isSkillId, type Persona, type PreviewRun } from "@orbis/shared";
 import type { Actor, Stage } from "@orbis/characters";
+import { refreshAccount, setBalance } from "../account";
 import { API_BASE, authActions, getAuth, loadSession } from "../auth";
-import { fmt } from "../format";
 import { talkerFor, unlockSpeech, voiceFor } from "../talk";
-import { usePreview } from "./store";
 
 export type RunOutput =
   | { kind: "empty" }
@@ -22,9 +20,8 @@ export type RunOutput =
 interface RunArgs {
   skillId: string;
   task: string;
-  persona: PreviewRun["agent"];
-  cost: number;
-  label?: string;
+  /** Your own agent (studio, or testing it from Discover) or an example agent priced by the server. */
+  source: { kind: "studio"; persona: Persona } | { kind: "example"; id: string };
   /** Studio runs animate the character. */
   stage?: Stage | null;
 }
@@ -35,7 +32,6 @@ const RESEARCH_NOTE = "Web research answers from what the model knows. It does n
 const SIGN_IN_NOTE = "Connect your wallet and sign in to get live answers. Signing in is free and costs no gas.";
 
 export function useRun() {
-  const { credits, spend, refund } = usePreview();
   const [out, setOut] = useState<RunOutput>({ kind: "empty" });
   const [busy, setBusy] = useState(false);
   const ctrl = useRef<AbortController | null>(null);
@@ -49,13 +45,10 @@ export function useRun() {
   }, []);
 
   const run = useCallback(
-    async ({ skillId, task, persona, cost, label, stage }: RunArgs) => {
+    async ({ skillId, task, source, stage }: RunArgs) => {
       if (!isSkillId(skillId)) return setOut({ kind: "note", text: "Equip at least one skill in the Skills tab first." });
       const skill = SKILL_BY_ID[skillId];
       if (!task.trim()) return setOut({ kind: "note", text: "Describe the task first, then run it." });
-      if (credits < cost) {
-        return setOut({ kind: "note", text: `Not enough credits. This run costs ${cost} CR and you have ${fmt(credits)} CR. Top-ups with USDG are coming soon.` });
-      }
       // Still inside the click: lets mobile Safari speak the answer when it arrives.
       if (stage) unlockSpeech();
       await loadSession();
@@ -76,7 +69,6 @@ export function useRun() {
       const note = skill.id === "research" && !WEB_SEARCH ? RESEARCH_NOTE : undefined;
       // Studio runs: the character reads the answer aloud, sentence by sentence, with a speech bubble.
       const talker = actor ? talkerFor("studio") : null;
-      let charged = false;
       let text = "";
       const finish = (ok: boolean) => {
         setBusy(false);
@@ -85,9 +77,9 @@ export function useRun() {
           else talker.stop();
         } else if (actor) actor.talking = false;
         if (actor && ok) actor.play("nod");
+        void refreshAccount();
       };
       const fail = (message: string, signIn = false) => {
-        if (charged) refund(cost, `Refund: ${label || persona.name} (${skill.name})`);
         setOut(text ? { kind: "answer", text: `${text}\n\n${message}`, done: true, note } : { kind: "note", text: message, signIn });
         finish(false);
       };
@@ -98,10 +90,15 @@ export function useRun() {
           credentials: "same-origin",
           signal: ac.signal,
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ agent: persona, skillId: skill.id, task: task.trim() } satisfies PreviewRun),
+          body: JSON.stringify(
+            (source.kind === "studio"
+              ? { source: "studio", agent: source.persona, skillId: skill.id, task: task.trim() }
+              : { source: "example", exampleId: source.id, skillId: skill.id, task: task.trim() }) satisfies PreviewRun,
+          ),
         });
         if (!res.ok || !res.body) {
-          const err = (await res.json().catch(() => null)) as { error?: string; message?: string } | null;
+          const err = (await res.json().catch(() => null)) as { error?: string; message?: string; balance?: number } | null;
+          if (typeof err?.balance === "number") setBalance(err.balance);
           if (res.status === 401) {
             authActions.signedOut();
             authActions.openSignIn();
@@ -109,8 +106,6 @@ export function useRun() {
           }
           return fail(err?.message || "Live answers are not available right now. Try again in a moment.");
         }
-        charged = spend(cost, `Ran ${label || persona.name} (${skill.name})`) && cost > 0;
-
         const reader = res.body.getReader();
         const dec = new TextDecoder();
         let buf = "";
@@ -123,8 +118,14 @@ export function useRun() {
             const line = buf.slice(0, sep).trim();
             buf = buf.slice(sep + 2);
             if (!line.startsWith("data:")) continue;
-            const ev = JSON.parse(line.slice(5)) as { t: "delta"; text: string } | { t: "done" } | { t: "error"; message: string };
-            if (ev.t === "delta") {
+            const ev = JSON.parse(line.slice(5)) as
+              | { t: "start"; cost: number; balance: number }
+              | { t: "delta"; text: string }
+              | { t: "done"; balance: number }
+              | { t: "error"; message: string; balance: number | null };
+            if (ev.t === "start") {
+              setBalance(ev.balance);
+            } else if (ev.t === "delta") {
               if (!text && actor) {
                 if (talker) talker.begin(actor, voiceFor(actor.config));
                 else actor.talking = true;
@@ -133,9 +134,11 @@ export function useRun() {
               text += ev.text;
               setOut({ kind: "answer", text, done: false, note });
             } else if (ev.t === "done") {
+              setBalance(ev.balance);
               setOut({ kind: "answer", text, done: true, note });
               return finish(true);
             } else {
+              if (ev.balance !== null) setBalance(ev.balance);
               return fail(ev.message);
             }
           }
@@ -149,7 +152,7 @@ export function useRun() {
         fail("Could not reach Mochibo. Check your connection and try again.");
       }
     },
-    [credits, spend, refund],
+    [],
   );
 
   return { out, busy, run, reset };

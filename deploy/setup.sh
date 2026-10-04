@@ -53,7 +53,7 @@ wait_for_apt
 # Third-party sources added by other apps can fail (for example, an expired signing key).
 # The Ubuntu sources are what we need, so a partial failure is not fatal.
 $APT update -y || echo "    Some package sources failed to update (see above). Continuing with the current package lists."
-$APT install -y nginx certbot python3-certbot-nginx git curl ca-certificates ufw xz-utils redis-server openssl
+$APT install -y nginx certbot python3-certbot-nginx git curl ca-certificates ufw xz-utils redis-server postgresql openssl
 
 echo "==> Node.js $NODE_MAJOR (private copy in $NODE_DIR)"
 if ! "$NODE_DIR/bin/node" -v 2>/dev/null | grep -q "^v$NODE_MAJOR\."; then
@@ -105,6 +105,9 @@ sudo -u "$APP_USER" -H env PATH="$PATH" bash -c "
 
 echo "==> API: private Redis, settings file, port and the /api route"
 DOMAIN="$DOMAIN" APP_USER="$APP_USER" bash "$APP_DIR/deploy/api-setup.sh"
+
+echo "==> Database migrations"
+sudo -u "$APP_USER" -H env PATH="$PATH" bash -c "cd '$APP_DIR' && DATABASE_URL=\"\$(grep -E '^DATABASE_URL=' ~/api.env | cut -d= -f2-)\" pnpm --filter @orbis/api db:migrate"
 
 echo "==> Start with PM2"
 sudo -u "$APP_USER" -H env PATH="$PATH" bash -c "cd '$APP_DIR' && pm2 startOrReload deploy/ecosystem.config.cjs && pm2 save"

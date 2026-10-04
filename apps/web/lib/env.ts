@@ -2,8 +2,6 @@
 export const PUBLIC_ENV = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL || "",
   tokenAddress: process.env.NEXT_PUBLIC_TOKEN_ADDRESS || "",
-  /** Free +100/+500/+1,000 buttons, for local testing only. Off unless set to "true". */
-  previewCredits: process.env.NEXT_PUBLIC_PREVIEW_CREDITS === "true",
 } as const;
 
 /** Base URL for share and embed links. Falls back to the current origin in the browser. */

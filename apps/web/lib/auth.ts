@@ -17,8 +17,17 @@ let opener: (() => void) | null = null;
 const subs = new Set<() => void>();
 
 function set(next: AuthState) {
+  const changed = next.status !== state.status || next.address !== state.address;
   state = next;
   subs.forEach((f) => f());
+  if (changed) authListeners.forEach((f) => f(next));
+}
+
+const authListeners = new Set<(s: AuthState) => void>();
+/** Called whenever the signed-in wallet changes (sign in, sign out, first load). */
+export function onAuthChange(fn: (s: AuthState) => void): () => void {
+  authListeners.add(fn);
+  return () => authListeners.delete(fn);
 }
 
 export const API_BASE = "/api";

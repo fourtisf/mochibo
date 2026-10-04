@@ -1,4 +1,5 @@
-// Draft schema for Orbis Agent Studio. Money is stored as BigInt centi-credits (1 CR = 100).
+// Mochibo database. Money is stored as BigInt centi-credits (1 CR = 100).
+// Migrations live in prisma/migrations; the VPS applies them with `prisma migrate deploy`.
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,9 +15,9 @@ enum Tone {
   CONCISE
 }
 
+// English only (owner decision, October 2026).
 enum Lang {
   EN
-  ID
 }
 
 enum Tier {
@@ -35,6 +36,7 @@ enum RunStatus {
 }
 
 enum LedgerType {
+  WELCOME // one-time free credits for a new wallet
   TOPUP
   RUN_DEBIT
   RUN_CREDIT
@@ -103,12 +105,16 @@ model Agent {
 
 model Run {
   id         String    @id @default(cuid())
-  agentId    String
-  agent      Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  // Null for studio runs and example agents until agents are stored (phase 2).
+  agentId    String?
+  agent      Agent?    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  // "studio", "example:<id>" or "agent"
+  source     String    @default("agent")
   runnerId   String
   runner     User      @relation("Runner", fields: [runnerId], references: [id])
   skillId    String
-  task       String    @db.VarChar(4000)
+  // Not stored during the preview: the privacy page promises tasks and answers are not kept.
+  task       String?   @db.VarChar(4000)
   output     String?
   status     RunStatus @default(PENDING)
   cost       BigInt // centi-credits charged to the runner

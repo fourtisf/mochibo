@@ -19,6 +19,8 @@ export interface RunTarget {
   tone: Tone;
   /** Sent to our API with the run, never shown to other people. */
   instructions: string;
+  /** Example agents are priced and described by the server; without it this is your own agent. */
+  exampleId?: string;
 }
 
 export function RunModal({ target, onClose }: { target: RunTarget | null; onClose: () => void }) {
@@ -78,7 +80,13 @@ export function RunModal({ target, onClose }: { target: RunTarget | null; onClos
             <button
               className="btn btn-primary btn-block"
               disabled={busy}
-              onClick={() => run({ skillId: skill, task, persona: { name: target.name, instructions: target.instructions, tone: target.tone, lang: target.lang, skills: target.skills }, cost: target.price, label: target.name })}
+              onClick={() => run({
+                  skillId: skill,
+                  task,
+                  source: target.exampleId
+                    ? { kind: "example", id: target.exampleId }
+                    : { kind: "studio", persona: { name: target.name, instructions: target.instructions, tone: target.tone, lang: target.lang, skills: target.skills } },
+                })}
             >
               {busy ? "Working…" : target.price ? `Run for ${target.price} CR` : "Run for free"}
             </button>

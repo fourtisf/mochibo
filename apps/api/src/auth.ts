@@ -4,7 +4,9 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { createPublicClient, http, isAddress, verifyMessage, type Hex } from "viem";
 import { generateSiweNonce, parseSiweMessage, validateSiweMessage } from "viem/siwe";
 import { z } from "zod";
+import type { PrismaClient } from "@prisma/client";
 import type { Env } from "./env";
+import { ensureUser } from "./ledger";
 import type { Store } from "./store";
 
 export const SESSION_COOKIE = "mochibo_session";
@@ -29,7 +31,7 @@ export async function sessionAddress(store: Store, req: FastifyRequest): Promise
   return store.get(`sess:${sid}`);
 }
 
-export function authRoutes(app: FastifyInstance, env: Env, store: Store): void {
+export function authRoutes(app: FastifyInstance, env: Env, store: Store, db: PrismaClient): void {
   // Smart-contract wallets (for example Coinbase Smart Wallet) need an RPC to verify; plain wallets do not.
   const client = env.RPC_URL ? createPublicClient({ transport: http(env.RPC_URL) }) : null;
   const cookieOpts = { path: "/", httpOnly: true, secure: env.secureCookies, sameSite: "lax" as const };
@@ -63,6 +65,8 @@ export function authRoutes(app: FastifyInstance, env: Env, store: Store): void {
     if (!ok) return fail("The signature does not match the wallet.");
 
     const address = msg.address.toLowerCase();
+    // First sign-in creates the account and grants the one-time welcome credits.
+    await ensureUser(db, address, env.WELCOME_CREDITS);
     const sid = randomBytes(32).toString("base64url");
     const ttl = env.SESSION_DAYS * 86400;
     await store.set(`sess:${sid}`, address, ttl);

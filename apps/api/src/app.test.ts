@@ -1,15 +1,31 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { PrismaClient } from "@prisma/client";
+import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { privateKeyToAccount } from "viem/accounts";
 import { createSiweMessage } from "viem/siwe";
 import { systemPrompt } from "./ai";
 import { buildApp } from "./app";
 import { loadEnv } from "./env";
+import { reconcile } from "./ledger";
 import { memoryStore } from "./store";
+
+// These tests use a real PostgreSQL database (money logic lives in SQL transactions). Point
+// TEST_DATABASE_URL at an empty database with the migrations applied, for example:
+//   TEST_DATABASE_URL=postgresql://mochibo:devpass@127.0.0.1:5432/mochibo_test pnpm --filter @orbis/api test
+// Every test starts from empty tables. Without the variable the suite is skipped.
+const DB_URL = process.env.TEST_DATABASE_URL;
+const db = DB_URL ? new PrismaClient({ datasourceUrl: DB_URL }) : (null as unknown as PrismaClient);
+if (!DB_URL) console.warn("TEST_DATABASE_URL is not set: API tests are skipped.");
+beforeEach(async () => {
+  if (DB_URL) await db.$executeRawUnsafe('TRUNCATE "Rating", "LedgerEntry", "Run", "Claim", "Deposit", "Agent", "User" CASCADE');
+});
+afterAll(async () => {
+  if (DB_URL) await db.$disconnect();
+});
 
 const ORIGIN = "https://mochibo.studio";
 const account = privateKeyToAccount("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d");
 const AGENT = { name: "Juni", instructions: "SECRET-INSTRUCTIONS", tone: "Friendly", lang: "English", skills: ["writer", "summary"] };
-const RUN = { agent: AGENT, skillId: "writer", task: "Write a hello post" };
+const RUN = { source: "studio", agent: AGENT, skillId: "writer", task: "Write a hello post" };
 
 /** A fake OpenRouter that streams the given pieces as SSE (with a keep-alive comment and usage). */
 function fakeProvider(pieces: string[], opts: { status?: number; calls?: { body: string }[] } = {}): typeof fetch {
@@ -25,7 +41,7 @@ function fakeProvider(pieces: string[], opts: { status?: number; calls?: { body:
 function setup(over: Record<string, string> = {}, fetchImpl: typeof fetch = fakeProvider(["Hello ", "world"])) {
   const env = loadEnv({ APP_URL: ORIGIN, OPENROUTER_API_KEY: "k", AI_MODEL: "test/model", ...over } as NodeJS.ProcessEnv);
   const store = memoryStore();
-  const app = buildApp({ env, store, fetchImpl, logger: false });
+  const app = buildApp({ env, store, db, fetchImpl, logger: false });
   return { app, store, env };
 }
 
@@ -50,7 +66,7 @@ afterEach(async () => {
   apps = [];
 });
 
-describe("auth", () => {
+describe.skipIf(!DB_URL)("auth", () => {
   it("signs in with SIWE and sets an httpOnly session cookie", async () => {
     const { app } = setup();
     apps.push(app);
@@ -96,7 +112,7 @@ describe("auth", () => {
   });
 });
 
-describe("runs", () => {
+describe.skipIf(!DB_URL)("runs", () => {
   it("needs a signed-in wallet", async () => {
     const { app } = setup();
     apps.push(app);
@@ -113,7 +129,7 @@ describe("runs", () => {
     const res = await app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload: RUN });
     expect(res.statusCode).toBe(200);
     expect(res.headers["content-type"]).toContain("text/event-stream");
-    expect(events(res.body)).toEqual([{ t: "delta", text: "Hello " }, { t: "delta", text: "world" }, { t: "done" }]);
+    expect(events(res.body)).toEqual([{ t: "start", cost: 5, balance: 95 }, { t: "delta", text: "Hello " }, { t: "delta", text: "world" }, { t: "done", balance: 95 }]);
     const sent = JSON.parse(calls[0].body);
     expect(sent.model).toBe("test/model");
     expect(sent.stream).toBe(true);
@@ -160,7 +176,7 @@ describe("runs", () => {
     apps.push(app);
     const { cookie } = await signIn(app);
     const res = await app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload: RUN });
-    expect(events(res.body)).toEqual([{ t: "error", message: expect.stringContaining("not counted") }]);
+    expect(events(res.body)).toEqual([{ t: "start", cost: 5, balance: 95 }, { t: "error", balance: 100, message: expect.stringContaining("refunded") }]);
     const status = await app.inject({ method: "GET", url: "/runs/status", headers: { cookie } });
     expect(status.json().usedToday).toBe(0);
   });
@@ -182,5 +198,65 @@ describe("systemPrompt", () => {
     expect(p).toContain("Tone: Friendly. Answer in English.");
     expect(p).toContain("cannot browse the web");
     expect(systemPrompt({ ...AGENT, skills: ["research"] } as never, "research", true)).not.toContain("cannot browse");
+  });
+});
+
+describe.skipIf(!DB_URL)("credits", () => {
+  const me = async (app: ReturnType<typeof setup>["app"], cookie: string) => (await app.inject({ method: "GET", url: "/me", headers: { cookie } })).json();
+
+  it("grants the welcome credits once per wallet", async () => {
+    const { app } = setup();
+    apps.push(app);
+    const { cookie } = await signIn(app);
+    await signIn(app);
+    expect((await me(app, cookie)).balance).toBe(100);
+    const ledger = (await app.inject({ method: "GET", url: "/me/ledger", headers: { cookie } })).json().entries;
+    expect(ledger).toHaveLength(1);
+    expect(ledger[0]).toMatchObject({ type: "WELCOME", amount: 100, balanceAfter: 100 });
+  });
+
+  it("debits a studio run, records it and keeps the ledger reconciled", async () => {
+    const { app } = setup();
+    apps.push(app);
+    const { cookie } = await signIn(app);
+    await app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload: RUN });
+    expect((await me(app, cookie)).balance).toBe(95);
+    const run = await db.run.findFirstOrThrow();
+    expect(run).toMatchObject({ status: "DONE", source: "studio", cost: 500n, model: "test/model", tokensIn: 50, tokensOut: 9, task: null });
+    const types = (await app.inject({ method: "GET", url: "/me/ledger", headers: { cookie } })).json().entries.map((e: { type: string }) => e.type);
+    expect(types).toEqual(["RUN_DEBIT", "WELCOME"]);
+    expect(await reconcile(db)).toEqual([]);
+  });
+
+  it("prices example agents on the server", async () => {
+    const { app } = setup();
+    apps.push(app);
+    const { cookie } = await signIn(app);
+    const go = (payload: object) => app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload });
+    const ok = await go({ source: "example", exampleId: "m1", skillId: "research", task: "TSLA" });
+    expect(events(ok.body)[0]).toEqual({ t: "start", cost: 15, balance: 85 });
+    expect((await go({ source: "example", exampleId: "nope", skillId: "research", task: "x" })).statusCode).toBe(404);
+    expect((await go({ source: "example", exampleId: "m1", skillId: "code", task: "x" })).statusCode).toBe(400);
+  });
+
+  it("refuses a run the balance cannot pay for, without using a daily run", async () => {
+    const { app } = setup({ WELCOME_CREDITS: "3" });
+    apps.push(app);
+    const { cookie } = await signIn(app);
+    const res = await app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload: RUN });
+    expect(res.statusCode).toBe(402);
+    expect(res.json()).toMatchObject({ error: "no_credits", balance: 3 });
+    expect((await app.inject({ method: "GET", url: "/runs/status", headers: { cookie } })).json().usedToday).toBe(0);
+    expect(await db.run.count()).toBe(0);
+  });
+
+  it("refunds a failed run in full", async () => {
+    const { app } = setup({}, fakeProvider([], { status: 502 }));
+    apps.push(app);
+    const { cookie } = await signIn(app);
+    await app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie }, payload: RUN });
+    expect((await me(app, cookie)).balance).toBe(100);
+    expect((await db.run.findFirstOrThrow()).status).toBe("REFUNDED");
+    expect(await reconcile(db)).toEqual([]);
   });
 });

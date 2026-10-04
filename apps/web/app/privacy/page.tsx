@@ -11,11 +11,12 @@ export default function Privacy() {
 
       <h2>Today, in the preview</h2>
       <ul>
-        <li>Your agent, credits and activity live only in your browser and are gone when you reload the page.</li>
+        <li>Your agent&apos;s look, name, instructions and skills live only in your browser until accounts can save agents.</li>
         <li>
-          When you sign in, your public wallet address and a session cookie keep you signed in for up to 7 days. We count your runs per day to apply the
-          daily limit.
+          When you sign in, we store your public wallet address and your credits ledger (welcome credits, runs, refunds). A session cookie keeps you
+          signed in for up to 7 days. We count your runs per day to apply the daily limit.
         </li>
+        <li>For each run we keep a record without its content: the skill, the price, the AI model, the number of tokens and the time.</li>
         <li>
           When you run an agent, its name, instructions, tone and language and your task are sent to our server and passed to the AI provider (OpenRouter and
           the model it routes to) to produce the answer. We do not store your tasks, instructions or answers, and we do not log them.

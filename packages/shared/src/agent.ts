@@ -36,25 +36,25 @@ export type AgentDraft = z.infer<typeof AgentDraftSchema>;
 export const TaskSchema = z.string().trim().min(1).max(LIMITS.taskMax);
 
 /**
- * POST /runs body during the preview. Agents are not saved on the server yet, so the studio sends
- * the persona with the run (the owner's own instructions, sent only to our API). When agents are
- * stored (phase 2), this becomes { agentId, skillId, task } and the server loads the persona.
+ * POST /runs body during the preview. Agents are not saved on the server yet, so a studio run sends
+ * the persona with the run (the owner's own instructions, sent only to our API). Example agents are
+ * looked up on the server by id. The server sets the price either way. When agents are stored
+ * (phase 2), a third source { kind: "agent", agentId } replaces the studio persona.
  */
-export const PreviewRunSchema = z
+const PersonaSchema = z
   .object({
-    agent: z
-      .object({
-        name: AgentNameSchema,
-        instructions: InstructionsSchema,
-        tone: z.enum(TONES),
-        lang: z.enum(LANGUAGES),
-        skills: SkillListSchema.refine((a) => a.length > 0, "Equip at least one skill"),
-      })
-      .strict(),
-    skillId: z.enum(SKILL_IDS),
-    task: TaskSchema,
+    name: AgentNameSchema,
+    instructions: InstructionsSchema,
+    tone: z.enum(TONES),
+    lang: z.enum(LANGUAGES),
+    skills: SkillListSchema.refine((a) => a.length > 0, "Equip at least one skill"),
   })
-  .strict()
-  .refine((r) => r.agent.skills.includes(r.skillId), { message: "That skill is not equipped", path: ["skillId"] });
+  .strict();
+
+export const PreviewRunSchema = z.discriminatedUnion("source", [
+  z.object({ source: z.literal("studio"), agent: PersonaSchema, skillId: z.enum(SKILL_IDS), task: TaskSchema }).strict(),
+  z.object({ source: z.literal("example"), exampleId: z.string().max(40), skillId: z.enum(SKILL_IDS), task: TaskSchema }).strict(),
+]);
 
 export type PreviewRun = z.infer<typeof PreviewRunSchema>;
+export type Persona = z.infer<typeof PersonaSchema>;

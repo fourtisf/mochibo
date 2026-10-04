@@ -68,7 +68,6 @@ Env vars used so far, all optional:
 | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | Base URL for share and embed links. Defaults to the current origin. |
 | `NEXT_PUBLIC_TOKEN_ADDRESS` | Shows the token address in Rewards. Empty shows "Coming soon". |
-| `NEXT_PUBLIC_PREVIEW_CREDITS` | Set to `true` to show free +100 / +500 / +1,000 buttons (local testing only; off by default since October 4, 2026). |
 
 ## Still placeholder (by design, for later phases)
 
@@ -217,3 +216,57 @@ Fastify 5 on Node 22, bundled to `dist/server.cjs` with esbuild.
 - The hero task card says "English to Spanish".
 - `brand/x-article.md` no longer lists an answer language.
 - The brief (CLAUDE.md, section 1) still says "English, Indonesian". That brief text is the owner's to update.
+
+## Update: real credits on the server (stage A)
+
+**Owner decisions (October 4, 2026)**
+- Credits are real and saved per wallet.
+- Every wallet gets 100 free credits once, at its first sign-in.
+- Free top-up buttons are gone.
+- USDG top-ups (stage B) come later and need the chain values and the CreditVault audit.
+
+**Database (PostgreSQL + Prisma 6.19, `prisma/schema.prisma`, first migration `prisma/migrations/*_init`)**
+
+Changes to the draft schema:
+- New `LedgerType.WELCOME`.
+- `Lang` is `EN` only.
+- `Run.agentId` is optional and `Run.source` was added ("studio", "example:<id>"), because agents are not stored yet.
+- `Run.task` is optional and not filled. The privacy page promises tasks and answers are not kept.
+
+**Ledger (`apps/api/src/ledger.ts`)**
+- Balances are BigInt centi-credits.
+- `applyChange` writes one append-only `LedgerEntry` with a unique idempotency key and the balance after the change, in the same transaction as the cached `User.balance`.
+- A debit is a conditional update (`balance >= cost`), so it is atomic under concurrency and can never go negative.
+- The welcome grant uses the key `welcome:<wallet>`, so it is paid at most once.
+- `reconcile()` compares cached balances with the ledger sums. `dist/reconcile.cjs` runs it nightly from `/etc/cron.d/mochibo-reconcile` and logs to `/home/mochibo/reconcile.log`.
+
+**Runs** follow CLAUDE.md 5.3:
+- The server sets the price: `RUN_COST_CR` for your own agent, the listed price for an example agent from `@orbis/shared` `EXAMPLE_AGENTS`.
+- One transaction debits the runner and creates the Run as RUNNING.
+- On success, the Run is DONE with the model and token counts.
+- On failure, a full `REFUND` and the Run is REFUNDED.
+- Not enough credits returns 402 and does not use a daily run.
+- The SSE stream reports the balance (`start`, `done`, `error`).
+- Example and studio runs have no creator to pay. Creator payouts (price minus the tier fee) arrive with stored, published agents.
+
+**API**
+- `GET /me` returns the balance.
+- `GET /me/ledger` returns the last 20 entries.
+- Sign-in creates the user.
+
+**Web**
+- `lib/account.ts` reads the balance and ledger from the API and follows sign-in.
+- The nav pill shows the server balance. Signed out, it offers "100 free credits" and a Connect wallet button.
+- The Publish pane shows the server ledger.
+- The browser no longer keeps any credits.
+- Testing your own published agent from Discover now costs a studio run (5 CR) instead of being free, so credits cannot be bypassed.
+
+**Tests**
+- The API tests need PostgreSQL. Set `TEST_DATABASE_URL` to an empty database with the migrations applied, for example: `TEST_DATABASE_URL=postgresql://user:pass@127.0.0.1:5432/mochibo_test pnpm check`. Without it, the API suite is skipped with a warning.
+- There are 17 API tests, including: welcome once, debit and reconcile, server pricing, insufficient credits, full refund.
+
+**Deploy**
+- `api-setup.sh` installs PostgreSQL and creates the role and database. Existing databases are left alone, and it is safe to run again.
+- `api-setup.sh` writes `DATABASE_URL` to `api.env` and installs the nightly check.
+- `update.sh` runs `prisma migrate deploy`.
+- Verified in the sandbox: the setup block twice, login with the generated password, and the migrate line from `update.sh`.

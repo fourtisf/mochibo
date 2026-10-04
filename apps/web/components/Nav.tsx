@@ -1,12 +1,11 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { APP_NAME, SOCIAL } from "@orbis/shared";
-import { PUBLIC_ENV } from "@/lib/env";
+import { APP_NAME, ECONOMICS, SOCIAL } from "@orbis/shared";
+import { useAccount } from "@/lib/account";
+import { authActions, loadSession, useAuth } from "@/lib/auth";
 import { fmt } from "@/lib/format";
 import { WalletPlaceholder } from "./wallet/WalletPlaceholder";
-import { usePreview } from "@/lib/preview/store";
-import { useToast } from "@/lib/toast";
 import s from "./Nav.module.css";
 
 // Wallet libraries load after first paint, outside the first-load bundle.
@@ -21,13 +20,17 @@ const LINKS = [
   ["#faq", "FAQ"],
 ] as const;
 
-const TOPUPS = [100, 500, 1000];
-
 export function Nav() {
-  const { credits, addCredits } = usePreview();
-  const toast = useToast();
+  const { balance } = useAccount();
+  const { status } = useAuth();
+  const signedIn = status === "authenticated";
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Read the session right away (a tiny request), not after the wallet libraries load.
+  useEffect(() => {
+    void loadSession();
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -42,12 +45,6 @@ export function Nav() {
       document.removeEventListener("keydown", esc);
     };
   }, [open]);
-
-  const topup = (v: number) => {
-    // Phase 2: POST /admin/credits (preview grants, only when PREVIEW_CREDITS=true).
-    addCredits(v);
-    toast(`Added ${fmt(v)} preview credits`);
-  };
 
   return (
     <header className={s.navWrap}>
@@ -78,18 +75,26 @@ export function Nav() {
               onClick={() => setOpen((o) => !o)}
             >
               <span className={s.crDot} />
-              <span>{fmt(credits)}</span>&nbsp;CR
+              <span>{signedIn && balance !== null ? fmt(balance) : 0}</span>&nbsp;CR
             </button>
             <div className={`${s.pop}${open ? " " + s.open : ""}`} role="dialog" aria-label="Credits">
-              <p>You start with free preview credits. They have no monetary value. Top-ups with USDG on Robinhood Chain are coming soon.</p>
-              {PUBLIC_ENV.previewCredits && (
-                <div className={s.row}>
-                  {TOPUPS.map((v) => (
-                    <button key={v} className="btn btn-glass btn-xs" onClick={() => topup(v)}>
-                      +{fmt(v)}
+              {signedIn ? (
+                <p>Credits pay for runs and are saved to your wallet. Failed runs are refunded. Top-ups with USDG on Robinhood Chain are coming soon.</p>
+              ) : (
+                <>
+                  <p>Sign in with your wallet to get {ECONOMICS.previewStartCr} free credits, once per wallet. Top-ups with USDG on Robinhood Chain are coming soon.</p>
+                  <div className={s.row}>
+                    <button
+                      className="btn btn-glass btn-xs"
+                      onClick={() => {
+                        setOpen(false);
+                        authActions.openSignIn();
+                      }}
+                    >
+                      Connect wallet
                     </button>
-                  ))}
-                </div>
+                  </div>
+                </>
               )}
             </div>
           </div>

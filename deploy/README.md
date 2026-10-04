@@ -4,7 +4,9 @@ Two PM2 processes run behind Nginx with Let's Encrypt:
 - `web`: the Next.js app, on 127.0.0.1 port 3000 or the next free one.
 - `api`: the Fastify API (wallet sign-in and live AI runs), on 127.0.0.1 port 4000 or the next free one. Nginx sends `/api/` to it.
 
-The API keeps sessions and run limits in a private Redis instance (`redis-server@mochibo`, localhost only, with a password). The worker and PostgreSQL come with phase 3.
+The API keeps sessions and run limits in a private Redis instance (`redis-server@mochibo`, localhost only, with a password).
+
+Users and the credits ledger live in PostgreSQL: a `mochibo` role and database, with the password in `/home/mochibo/.mochibo-db-password`. Other databases on the server are not touched. `update.sh` applies new migrations (`prisma/migrations`) on every update. The worker (chain indexer) comes with USDG top-ups.
 
 Prerequisites: DNS `A @ -> <VPS IP>` and `CNAME www -> <domain>` (already set for mochibo.studio).
 
@@ -102,6 +104,8 @@ sudo -u mochibo env PATH=$PATH pm2 logs web   # web logs
 sudo -u mochibo env PATH=$PATH pm2 logs api   # API logs (runs are logged without task text or instructions)
 curl -s http://127.0.0.1:$(cat /home/mochibo/app/deploy/.api-port)/health   # API health
 systemctl status redis-server@mochibo         # Mochibo's Redis
+tail -n 5 /home/mochibo/reconcile.log          # nightly check: balances must match the ledger (03:17)
+sudo -u postgres psql mochibo -c 'SELECT wallet, balance/100.0 AS cr FROM "User" ORDER BY "createdAt" DESC LIMIT 10;'   # recent wallets
 nginx -t && systemctl reload nginx  # after editing the Nginx site
 certbot renew --dry-run             # check auto-renewal (a systemd timer runs it)
 ```

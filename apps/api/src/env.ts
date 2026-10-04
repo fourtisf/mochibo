@@ -1,4 +1,5 @@
 /* Server env, validated once at startup. Secrets live only here (never in NEXT_PUBLIC_* vars). */
+import { ECONOMICS } from "@orbis/shared";
 import { z } from "zod";
 
 const bool = (def: boolean) =>
@@ -28,6 +29,12 @@ const EnvSchema = z.object({
   APP_URL: z.string().url().default("http://localhost:3000"),
   /** Empty runs an in-memory store (development and tests only). */
   REDIS_URL: z.string().default(""),
+  /** PostgreSQL for users and the credits ledger. */
+  DATABASE_URL: z.string().default(""),
+  /** One-time free credits for a new wallet. */
+  WELCOME_CREDITS: int(ECONOMICS.previewStartCr),
+  /** Price of a studio run of your own agent, in whole CR. */
+  RUN_COST_CR: int(ECONOMICS.runCostCr),
   /** Chain id required in the SIWE message. Empty accepts any chain until Robinhood Chain values are confirmed. */
   CHAIN_ID: int(0),
   /** Optional RPC used to verify smart-contract wallet signatures (ERC-1271/6492). EOAs never need it. */

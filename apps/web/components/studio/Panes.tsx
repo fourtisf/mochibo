@@ -20,6 +20,8 @@ import { loadEngine } from "@/lib/engine";
 import { fmt, rnd } from "@/lib/format";
 import { copyText } from "@/lib/hooks";
 import { usePreview } from "@/lib/preview/store";
+import { useAccount } from "@/lib/account";
+import { useAuth } from "@/lib/auth";
 import { useShareLinks } from "@/lib/share";
 import { useStages } from "@/lib/stages";
 import { useToast } from "@/lib/toast";
@@ -325,8 +327,12 @@ export function SkillsPane() {
   );
 }
 
+const LEDGER_LABEL: Record<string, string> = { WELCOME: "Welcome credits", RUN_DEBIT: "Run", REFUND: "Refund", RUN_CREDIT: "Earned", TOPUP: "Top-up" };
+
 export function PublishPane({ active }: { active: boolean }) {
-  const { agent, ledger, updateAgent, setPublished, addLedger } = usePreview();
+  const { agent, updateAgent, setPublished } = usePreview();
+  const { ledger } = useAccount();
+  const { status } = useAuth();
   const { shareLink, embedCode } = useShareLinks();
   const stages = useStages();
   const toast = useToast();
@@ -360,7 +366,6 @@ export function PublishPane({ active }: { active: boolean }) {
     setPublished(true, e.renderThumbnail(agent.cfg));
     toast("Published to Discover");
     stages.get("studio")?.power("hype");
-    addLedger(`Published ${agent.name}`, 0);
   };
 
   const thumb = agent.published && agent.thumb ? agent.thumb : liveThumb;
@@ -441,20 +446,20 @@ export function PublishPane({ active }: { active: boolean }) {
       <div className="lbl">Ledger</div>
       <ul className={s.ledger}>
         {ledger.length ? (
-          ledger.map((l) => (
+          ledger.slice(0, 10).map((l) => (
             <li key={l.id}>
               <span>
-                {l.time} {l.text}
+                {new Date(l.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} {l.memo || LEDGER_LABEL[l.type] || l.type}
               </span>
-              <b className={l.amt >= 0 ? s.plus : s.minus}>
-                {l.amt >= 0 ? "+" : ""}
-                {fmt(+l.amt.toFixed(2))} CR
+              <b className={l.amount >= 0 ? s.plus : s.minus}>
+                {l.amount >= 0 ? "+" : ""}
+                {fmt(l.amount)} CR
               </b>
             </li>
           ))
         ) : (
           <li>
-            <span>No activity yet. Runs and earnings show up here.</span>
+            <span>{status === "authenticated" ? "No activity yet. Runs and earnings show up here." : "Sign in with your wallet to see your credits ledger."}</span>
           </li>
         )}
       </ul>

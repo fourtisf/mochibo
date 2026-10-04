@@ -1,9 +1,9 @@
 /* AI provider: OpenRouter's OpenAI-compatible chat API, streamed. Called only from this server. */
-import { APP_NAME, SKILL_BY_ID, type PreviewRun } from "@orbis/shared";
+import { APP_NAME, SKILL_BY_ID, type Persona, type SkillId } from "@orbis/shared";
 import type { Env } from "./env";
 
 /** Same prompt shape as liveRun() in the prototype: the creator's persona in the system prompt, the task in the user turn. */
-export function systemPrompt(agent: PreviewRun["agent"], skillId: PreviewRun["skillId"], webSearch: boolean): string {
+export function systemPrompt(agent: Persona, skillId: SkillId, webSearch: boolean): string {
   const skill = SKILL_BY_ID[skillId];
   const lines = [
     `You are ${agent.name}, an AI agent.`,

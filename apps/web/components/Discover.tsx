@@ -54,8 +54,8 @@ export function Discover() {
     openKey.current++;
     setTarget(
       c.mine
-        ? { key: openKey.current, name: agent.name, desc: "Testing your own agent is free.", skills: agent.skills, price: 0, thumb: agent.thumb, glow: agent.cfg.glow, lang: agent.lang, tone: agent.tone, instructions: agent.instructions }
-        : { key: openKey.current, name: c.name, desc: c.desc, skills: c.skills, price: c.price, thumb: c.thumb, glow: c.glow, lang: "English", tone: "Friendly", instructions: c.desc },
+        ? { key: openKey.current, name: agent.name, desc: "Testing your own agent costs the same as a studio run.", skills: agent.skills, price: ECONOMICS.runCostCr, thumb: agent.thumb, glow: agent.cfg.glow, lang: agent.lang, tone: agent.tone, instructions: agent.instructions }
+        : { key: openKey.current, name: c.name, desc: c.desc, skills: c.skills, price: c.price, thumb: c.thumb, glow: c.glow, lang: "English", tone: "Friendly", instructions: c.desc, exampleId: c.id },
     );
   };
 

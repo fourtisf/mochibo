@@ -23,6 +23,8 @@ sudo -u "$APP_USER" -H env PATH="$PATH" bash -c "
   { echo \"NEXT_PUBLIC_APP_URL=https://\${DOMAIN:-mochibo.studio}\"; [ -f ~/mochibo.env ] && cat ~/mochibo.env; true; } > apps/web/.env.production.local
   pnpm install --frozen-lockfile
   pnpm build
+  # Database migrations (prisma/migrations), with the URL from the private settings file.
+  DATABASE_URL=\"\$(grep -E '^DATABASE_URL=' ~/api.env | cut -d= -f2-)\" pnpm --filter @orbis/api db:migrate
   pm2 startOrReload deploy/ecosystem.config.cjs
   pm2 save
 "
