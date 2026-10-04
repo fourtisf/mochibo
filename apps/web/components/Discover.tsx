@@ -73,7 +73,7 @@ export function Discover() {
       return {
         key: a.id,
         name: a.name,
-        by: isMine ? "by you" : `by ${shortAddress(a.creator)}`,
+        by: `${isMine ? "by you" : `by ${shortAddress(a.creator)}`} · Level ${a.level}`,
         thumb: a.thumbnailUrl || portraitUrl(CHARACTER_BY_ID[a.baseId] ? a.baseId : "juni"),
         glow: cfg.glow,
         config: cfg,

@@ -11,7 +11,11 @@ import {
   SKILL_BY_ID,
   TEMPLATES,
   TONES,
+  RARE_ITEMS,
+  TOKEN_SYMBOL,
   formatBps,
+  isUnlocked,
+  levelFor,
   type CharacterConfig,
   type ColorKey,
 } from "@orbis/shared";
@@ -167,6 +171,58 @@ function randomLook(c: CharacterConfig): CharacterConfig {
   return n;
 }
 
+/** Rare items: unlocked by the agent's level (runs by other people, battle wins) or by holding the token. */
+function RareItems() {
+  const { agent, setCfg } = usePreview();
+  const signedIn = useAuth().status === "authenticated";
+  const info = levelFor(agent.xp);
+  const tier = "FREE" as const; // holder tiers switch on with the token address (CLAUDE.md 5.8)
+  const pct = info.next === null ? 100 : Math.round(((agent.xp - info.floor) / (info.next - info.floor)) * 100);
+  const nextItem = RARE_ITEMS.find((i) => i.level === info.level + 1);
+  return (
+    <div className="field">
+      <div className="lbl">
+        Rare items <small>Level {agent.level}</small>
+      </div>
+      <div className={s.lvlBar} aria-hidden="true">
+        <i style={{ width: `${pct}%` }} />
+      </div>
+      <p className={s.lvlNote}>
+        {!signedIn
+          ? "Sign in and publish your agent. It levels up when other people run it."
+          : info.next === null
+            ? "Top level reached. Every rare item is yours."
+            : `${info.next - agent.xp} more ${info.next - agent.xp === 1 ? "point" : "points"} to level ${info.level + 1}${nextItem ? ` (${nextItem.name})` : ""}. One point per person per day who runs it, three per battle win.`}
+      </p>
+      <div className="chips">
+        {RARE_ITEMS.map((item) => {
+          const open = signedIn && isUnlocked(item, agent.level, tier);
+          const on = agent.cfg[item.field] === item.value;
+          return (
+            <button
+              key={item.id}
+              className={`chip ${s.rare}`}
+              aria-pressed={on}
+              disabled={!open}
+              title={open ? item.name : item.holder ? `For $${TOKEN_SYMBOL} holders, coming soon` : `Unlocks at level ${item.level}`}
+              onClick={() => setCfg(item.field, (on ? "none" : item.value) as never)}
+            >
+              {!open && (
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+                  <rect x="5" y="11" width="14" height="10" rx="2" />
+                  <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                </svg>
+              )}
+              {item.name}
+              {!open && <small>{item.holder ? "Holders" : `Lv ${item.level}`}</small>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function GearPane() {
   const { agent, setCfg, replaceCfg } = usePreview();
   const stages = useStages();
@@ -201,6 +257,7 @@ export function GearPane() {
           <Chips k="buddy" value={c.buddy ? "on" : "off"} onPick={(v) => setCfg("buddy", v === "on")} />
         </div>
       </div>
+      <RareItems />
       <div className="field">
         <div className="lbl">Accessory color</div>
         <Swatches k="accC" value={c.accC} onPick={(v) => setCfg("accC", v)} />

@@ -93,6 +93,8 @@ model Agent {
   publishedAt  DateTime?
   thumbnailUrl String?
   runsCount    Int       @default(0)
+  // Level points: 1 per other wallet per day that runs it, plus battle wins (packages/shared/src/levels.ts).
+  xp           Int       @default(0)
   earnedTotal  BigInt    @default(0) // centi-credits
   ratingSum    Int       @default(0)
   ratingCount  Int       @default(0)

@@ -58,6 +58,9 @@ export interface Rig {
   buddy?: THREE.Group;
   halo?: THREE.Group;
   haloY?: number;
+  /** Rare items: twinkling sparkles around the body, and a spinning ring of stars. */
+  aura?: { g: THREE.Group; sp: THREE.Sprite[] };
+  galaxy?: THREE.Group;
 }
 
 export interface Mats {
@@ -404,6 +407,31 @@ export function buildHat(sk: THREE.Group, c: CharacterConfig, M: Mats, R: Rig, s
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: C(c.glow), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.55, toneMapped: false })); sp.scale.set(0.9, 0.5, 1); hg.add(sp);
     R.halo = hg;
   }
+  if (h === "crown") {
+    const gold = phys("#FFC94A", { roughness: 0.22, metalness: 0.85, clearcoat: 1, clearcoatRoughness: 0.1 });
+    const gem = phys(c.glow, { roughness: 0.08, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.05 });
+    const cg = new THREE.Group(); cg.position.y = bot ? 0.44 : 0.47; cg.rotation.set(-0.12, 0, 0.1); sk.add(cg);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.09, 48, 1, true), gold); (band.material as THREE.Material).side = THREE.DoubleSide; cg.add(band);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.016, 8, 48), gold); rim.rotation.x = Math.PI / 2; rim.position.y = -0.045; cg.add(rim);
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2;
+      const sp = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.12, 16), gold); sp.position.set(Math.sin(a) * 0.205, 0.1, Math.cos(a) * 0.205); cg.add(sp);
+      cg.add(sph(0.026, gem, Math.sin(a) * 0.205, 0.17, Math.cos(a) * 0.205, 16));
+      cg.add(sph(0.022, gem, Math.sin(a + 0.63) * 0.215, 0, Math.cos(a + 0.63) * 0.215, 12));
+    }
+  }
+  if (h === "diamond") {
+    const hg = new THREE.Group(); R.haloY = 0.66; hg.position.y = R.haloY; sk.add(hg);
+    const ice = new THREE.MeshBasicMaterial({ color: C("#D8FBFF"), toneMapped: false });
+    const t = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.018, 12, 64), ice); t.rotation.x = Math.PI / 2; hg.add(t);
+    const dm = phys("#EFFDFF", { roughness: 0.04, metalness: 0.3, clearcoat: 1, clearcoatRoughness: 0.02 });
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      const d = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), dm); d.position.set(Math.sin(a) * 0.26, 0, Math.cos(a) * 0.26); d.scale.y = 1.5; hg.add(d);
+    }
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: C("#BFF4FF"), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.7, toneMapped: false })); sp.scale.set(1, 0.55, 1); hg.add(sp);
+    R.halo = hg;
+  }
   if (h === "headphones") {
     const hm = MAT.vinyl("#231D48"), x = bot ? 0.5 : 0.45;
     const band = new THREE.Mesh(new THREE.TorusGeometry(bot ? 0.5 : 0.47, 0.036, 12, 48, Math.PI), hm); band.rotation.x = -0.08; band.position.y = bot ? 0.02 : 0; sk.add(band);
@@ -436,6 +464,42 @@ export function buildBack(torso: THREE.Group, c: CharacterConfig, M: Mats, R: Ri
       [[0.13, 0.04, 0.12], [0.23, 0.1, 0.1], [0.31, 0.17, 0.075]].forEach(([x, y, r]) => { const f = sph(r, wm, x * s, y, -0.03, 24); f.scale.set(1, 0.42, 0.14); f.rotation.z = 0.5 * s; wg.add(f); });
       R.wings.push({ g: wg, s });
     });
+  }
+  if (b === "goldwings") {
+    const gold = phys("#FFC94A", { roughness: 0.2, metalness: 0.85, clearcoat: 1, clearcoatRoughness: 0.08 });
+    [-1, 1].forEach((s) => {
+      const wg = new THREE.Group(); wg.position.set(0.07 * s, 0.36, -0.2); torso.add(wg);
+      [[0.16, 0.05, 0.16], [0.3, 0.15, 0.15], [0.43, 0.27, 0.13], [0.54, 0.4, 0.1], [0.6, 0.54, 0.07]].forEach(([x, y, r]) => { const f = sph(r, gold, x * s, y, -0.03, 24); f.scale.set(1, 0.42, 0.14); f.rotation.z = 0.6 * s; wg.add(f); });
+      const fl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: C("#FFD86B"), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.5, toneMapped: false }));
+      fl.position.set(0.36 * s, 0.24, -0.06); fl.scale.set(0.8, 0.6, 1); wg.add(fl);
+      R.wings.push({ g: wg, s });
+    });
+  }
+  if (b === "aura") {
+    const g = new THREE.Group(); g.position.y = 0.3; torso.add(g);
+    const sp: THREE.Sprite[] = [];
+    for (let i = 0; i < 16; i++) {
+      const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: C(i % 3 ? c.glow : "#FFFFFF"), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, toneMapped: false }));
+      const a = (i / 16) * Math.PI * 2 + Math.random() * 0.3;
+      const r = 0.5 + Math.random() * 0.2;
+      m.position.set(Math.sin(a) * r, -0.55 + Math.random() * 1.55, Math.cos(a) * r);
+      m.scale.setScalar(0.12 + Math.random() * 0.08);
+      g.add(m); sp.push(m);
+    }
+    R.aura = { g, sp };
+  }
+  if (b === "galaxy") {
+    const tilt = new THREE.Group(); tilt.position.y = 0.32; tilt.rotation.set(0.35, 0, 0.18); torso.add(tilt);
+    const spin = new THREE.Group(); tilt.add(spin);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.66, 0.012, 8, 96), M.glow); ring.rotation.x = Math.PI / 2; spin.add(ring);
+    const ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.74, 0.006, 6, 96), new THREE.MeshBasicMaterial({ color: C("#CFC6FF"), transparent: true, opacity: 0.5, toneMapped: false })); ring2.rotation.x = Math.PI / 2; spin.add(ring2);
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const st = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: C(i % 2 ? "#FFFFFF" : c.glow), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, toneMapped: false }));
+      const r = i % 3 === 0 ? 0.74 : 0.66;
+      st.position.set(Math.sin(a) * r, 0, Math.cos(a) * r); st.scale.setScalar(i % 3 === 0 ? 0.16 : 0.1); spin.add(st);
+    }
+    R.galaxy = spin;
   }
   if (b === "jetpack") {
     const jm = MAT.metal("#D9DCF5");

@@ -173,6 +173,18 @@ export function runRoutes(app: FastifyInstance, env: Env, store: Store, db: Pris
             });
             if (agentId) await tx.agent.update({ where: { id: agentId }, data: { runsCount: { increment: 1 }, earnedTotal: { increment: creatorNet } } });
           });
+          // Level points: one per other wallet per agent per UTC day, so one wallet cannot farm levels.
+          // The run is already paid and done here, so a failure only skips the point.
+          if (agentId && creatorId) {
+            const id = agentId;
+            const day = new Date().toISOString().slice(0, 10);
+            await store
+              .setNx(`xp:${id}:${runner.id}:${day}`, "1", 2 * 86400)
+              .then(async (first) => {
+                if (first) await db.agent.update({ where: { id }, data: { xp: { increment: 1 } } });
+              })
+              .catch((e: unknown) => req.log.warn({ err: (e as Error).message }, "xp not added"));
+          }
           send({ t: "done", balance: toCr(balance) });
           // Never log the task, the instructions or the answer.
           req.log.info({ run: { id: run.id, wallet: address, source, skill: r.skillId, model: ev.model, usage: ev.usage, ms: Date.now() - started } }, "run done");

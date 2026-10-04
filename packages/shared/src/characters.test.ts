@@ -24,7 +24,7 @@ describe("CharacterConfig", () => {
 
   it("rejects values outside the chip lists", () => {
     expect(CharacterConfigSchema.safeParse({ ...DEFAULT_CHARACTER, hair: "mohawk" }).success).toBe(false);
-    expect(CharacterConfigSchema.safeParse({ ...DEFAULT_CHARACTER, hat: "crown" }).success).toBe(false);
+    expect(CharacterConfigSchema.safeParse({ ...DEFAULT_CHARACTER, hat: "tophat" }).success).toBe(false);
   });
 
   it("chip and palette values all pass the schema", () => {

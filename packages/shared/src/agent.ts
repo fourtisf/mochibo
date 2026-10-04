@@ -65,6 +65,9 @@ export interface OwnAgent {
   earned: number;
   rating: number | null;
   ratingCount: number;
+  /** Level points and the level they give (see levels.ts). */
+  xp: number;
+  level: number;
 }
 
 /** An agent as everyone else sees it: never the instructions. */

@@ -4,9 +4,10 @@ import { z } from "zod";
 export const HAIR_STYLES = ["messy", "bob", "buns", "pony", "long", "curly", "spiky", "buzz"] as const;
 export const TOP_STYLES = ["hoodie", "bomber", "tee", "overalls"] as const;
 export const MOUTHS = ["smile", "cat"] as const;
-export const HATS = ["none", "beanie", "cap", "catears", "halo", "headphones"] as const;
+export const HATS = ["none", "beanie", "cap", "catears", "halo", "headphones", "crown", "diamond"] as const;
 export const GLASSES = ["none", "round", "shades"] as const;
-export const BACKS = ["none", "backpack", "wings", "cape", "jetpack"] as const;
+export const BACKS = ["none", "backpack", "wings", "cape", "jetpack", "aura", "goldwings", "galaxy"] as const;
+/* crown, diamond, aura, goldwings and galaxy are rare items, unlocked by level (see levels.ts). */
 export const LEGS = ["legs", "hover"] as const;
 export const KINDS = ["human", "bot"] as const;
 

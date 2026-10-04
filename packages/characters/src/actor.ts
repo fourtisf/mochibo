@@ -113,6 +113,8 @@ export class ActorImpl implements Actor {
     R.wings.forEach((w) => { w.g.rotation.y = w.s * (0.45 + Math.sin(t * 6 + this.phase) * 0.35); });
     R.jets.forEach((j, i) => { const k = 0.26 + Math.sin(t * 40 + i * 2) * 0.03 + Math.random() * 0.03; j.scale.set(k, k * 1.5, 1); });
     if (R.flame) { const k = 0.5 + Math.sin(t * 30) * 0.05; R.flame.scale.set(k, k, 1); }
+    if (R.aura) { R.aura.g.rotation.y += dt * 0.7; R.aura.sp.forEach((sp, i) => { const k = 0.1 + (Math.sin(t * 3 + i * 1.7) * 0.5 + 0.5) * 0.12; sp.scale.set(k, k, 1); sp.position.y += Math.sin(t * 1.5 + i) * dt * 0.05; }); }
+    if (R.galaxy) R.galaxy.rotation.y += dt * 0.55;
     if (R.halo) { R.halo.position.y = (R.haloY as number) + Math.sin(t * 2 + this.phase) * 0.025; R.halo.rotation.y += dt * 0.6; }
     if (R.buddy) { const b = R.buddy; b.position.y = 1.38 + Math.sin(t * 2.4 + this.phase) * 0.07; b.position.x = 0.62 + Math.sin(t * 0.8) * 0.04; b.rotation.y = Math.sin(t * 1.2) * 0.4 + this.look.x * 0.6; b.rotation.z = Math.sin(t * 2.4) * 0.08; b.scale.y = this.blink ? 0.97 : 1; }
     const cs = pedestalData(this.ped).cs; cs.material.opacity = 0.6 * (1 - clamp(m.y * 1.3, 0, 0.8)); cs.position.x = m.x / this.scale; cs.scale.setScalar(m.s);

@@ -19,7 +19,7 @@ import {
   type SkillId,
   type Tone,
 } from "@orbis/shared";
-import { api, useAuth } from "../auth";
+import { ApiError, api, useAuth } from "../auth";
 import { loadEngine } from "../engine";
 
 export interface StudioAgent {
@@ -41,11 +41,14 @@ export interface StudioAgent {
   runs: number;
   earned: number;
   rating: number | null;
+  /** Level points and level (rare items unlock by level). */
+  xp: number;
+  level: number;
   /** Portrait uploaded at publish time (URL), or "". */
   thumb: string;
 }
 
-export type SaveState = "Saved" | "Saving…" | "Sign in to save" | "Name needed" | "Not saved, retrying";
+export type SaveState = "Saved" | "Saving…" | "Sign in to save" | "Name needed" | "Not saved, retrying" | "Item locked";
 
 interface PreviewStore {
   agent: StudioAgent;
@@ -83,6 +86,8 @@ const draftFor = (baseId: string): StudioAgent => {
     runs: 0,
     earned: 0,
     rating: null,
+    xp: 0,
+    level: 1,
     thumb: "",
   };
 };
@@ -103,6 +108,8 @@ export const fromOwn = (o: OwnAgent): StudioAgent => ({
   runs: o.runsCount,
   earned: o.earned,
   rating: o.rating,
+  xp: o.xp,
+  level: o.level,
   thumb: o.thumbnailUrl ?? "",
 });
 
@@ -143,7 +150,12 @@ export function PreviewStoreProvider({ children }: { children: ReactNode }) {
       // Only "Saved" if nothing changed while the request was in flight.
       if (latest.current === a) setSaveState("Saved");
       return true;
-    } catch {
+    } catch (e) {
+      // A locked rare item will not save until the agent levels up: say so instead of retrying.
+      if (e instanceof ApiError && e.code === "locked") {
+        setSaveState("Item locked");
+        return false;
+      }
       setSaveState("Not saved, retrying");
       saveTimer.current = setTimeout(() => void saveNow(), 4000);
       return false;

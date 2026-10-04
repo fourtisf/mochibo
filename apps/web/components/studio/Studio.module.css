@@ -618,3 +618,48 @@
 .menu .danger {
   color: #ff9cb8;
 }
+
+/* rare items and levels */
+.lvlBar {
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+.lvlBar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--violet), var(--aqua));
+}
+.lvlNote {
+  margin: 8px 0 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink3);
+}
+.rare {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rare small {
+  font-size: 11px;
+  color: var(--ink3);
+}
+.rare:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.lvl {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a1440;
+  background: linear-gradient(90deg, #c9bfff, var(--aqua));
+  vertical-align: middle;
+}

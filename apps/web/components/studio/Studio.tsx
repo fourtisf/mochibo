@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { ECONOMICS, LIMITS, MOTIONS, SKILL_BY_ID } from "@orbis/shared";
+import { ECONOMICS, LIMITS, MOTIONS, SKILL_BY_ID, unlockedBetween } from "@orbis/shared";
 import { RunOutput } from "@/components/RunOutput";
 import { TryChips } from "@/components/TryChips";
 import { PowerDock } from "@/components/PowerDock";
@@ -36,6 +36,7 @@ export function Studio() {
   const [tab, setTab] = useState<Tab>("char");
   const stages = useStages();
   const toast = useToast();
+  useLevelUp();
 
   return (
     <section id="studio">
@@ -53,6 +54,7 @@ export function Studio() {
             </span>
             <span className={s.crumb}>
               <AgentSwitcher /> / <NameEdit />
+              {agent.id && <span className={s.lvl} title={`Level ${agent.level}`}>Lv {agent.level}</span>}
             </span>
             <span className="bar-right">
               <span className={s.saved}>
@@ -283,6 +285,30 @@ function VoiceToggle() {
       </svg>
     </button>
   );
+}
+
+/** Celebrate when an agent reached a higher level since this browser last saw it. */
+function useLevelUp() {
+  const { agent } = usePreview();
+  const stages = useStages();
+  const toast = useToast();
+  useEffect(() => {
+    if (!agent.id) return;
+    const key = `mochibo-level:${agent.id}`;
+    let seen = 0;
+    try {
+      seen = Number(localStorage.getItem(key) || 0);
+      localStorage.setItem(key, String(agent.level));
+    } catch {
+      return;
+    }
+    if (!seen || agent.level <= seen) return;
+    const items = unlockedBetween(seen, agent.level).map((i) => i.name);
+    toast(`Level up! ${agent.name} reached level ${agent.level}${items.length ? `. Unlocked: ${items.join(", ")}` : ""}`);
+    const st = stages.get("studio");
+    st?.main?.play("cheer");
+    st?.power("hype");
+  }, [agent.id, agent.level, agent.name, stages, toast]);
 }
 
 function Console() {

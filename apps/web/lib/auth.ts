@@ -33,6 +33,17 @@ export function onAuthChange(fn: (s: AuthState) => void): () => void {
 export const API_BASE = "/api";
 
 /** JSON request to our API. Same-origin, so the session cookie and Origin header go along. */
+/** A failed API call: the HTTP status, the API's error code and its readable message. */
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
@@ -41,7 +52,10 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     credentials: "same-origin",
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: string; message?: string } | null;
+    throw new ApiError(res.status, body?.error ?? "http", body?.message ?? `HTTP ${res.status}`);
+  }
   return res.json() as Promise<T>;
 }
 

@@ -71,6 +71,7 @@ export function AgentPage({ agent }: { agent: PublicAgent }) {
         <h1>{agent.name}</h1>
         <p className={s.by}>
           by {mine ? "you" : shortAddress(agent.creator)}
+          <span className={s.rating}>Level {agent.level}</span>
           {agent.rating !== null && (
             <span className={s.rating}>
               <StarIcon /> {agent.rating.toFixed(1)} <small>({fmt(agent.ratingCount)})</small>

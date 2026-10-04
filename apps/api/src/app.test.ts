@@ -357,6 +357,36 @@ describe.skipIf(!DB_URL)("agents", () => {
     expect(board[0]).toMatchObject({ wallet: creatorAcct.address.toLowerCase(), earned: 19, runs: 1 });
   });
 
+  it("gives level points for runs by other wallets, once per wallet per day", async () => {
+    const { app } = setup({}, fakeProvider(["Gm"]));
+    apps.push(app);
+    const { cookie: creatorCookie, agent } = await creatorWithAgent(app);
+    const { cookie } = await signIn(app);
+    const runAs = (c: string) => app.inject({ method: "POST", url: "/runs", headers: { origin: ORIGIN, cookie: c }, payload: { source: "agent", agentId: agent.id, skillId: "writer", task: "Tweet" } });
+    await runAs(cookie);
+    await runAs(cookie);
+    await runAs(creatorCookie); // the owner's own test run gives nothing
+    const mine = (await app.inject({ method: "GET", url: "/agents/mine", headers: { cookie: creatorCookie } })).json().agents[0];
+    expect(mine).toMatchObject({ runsCount: 3, xp: 1, level: 1 });
+  });
+
+  it("keeps rare items locked until the agent's level allows them", async () => {
+    const { app } = setup();
+    apps.push(app);
+    const { cookie, agent } = await creatorWithAgent(app, false);
+    const h = { origin: ORIGIN, cookie };
+    const patch = (character: object) => app.inject({ method: "PATCH", url: `/agents/${agent.id}`, headers: h, payload: { character } });
+    const wings = await patch({ ...CHAR, back: "goldwings" });
+    expect(wings.statusCode).toBe(403);
+    expect(wings.json()).toMatchObject({ error: "locked", item: "goldwings", message: "Reach level 3 to use Gold wings." });
+    await db.agent.update({ where: { id: agent.id }, data: { xp: 15 } });
+    expect((await patch({ ...CHAR, back: "goldwings" })).statusCode).toBe(200);
+    expect((await patch({ ...CHAR, hat: "crown" })).statusCode).toBe(403); // level 4
+    expect((await patch({ ...CHAR, hat: "diamond" })).json().error).toBe("locked"); // holders only
+    const created = await app.inject({ method: "POST", url: "/agents", headers: h, payload: { ...NEW_AGENT, character: { ...CHAR, back: "aura" } } });
+    expect(created.statusCode).toBe(403);
+  });
+
   it("charges a studio run for your own agent and pays nobody", async () => {
     const { app } = setup();
     apps.push(app);

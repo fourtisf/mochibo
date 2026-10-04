@@ -318,3 +318,11 @@ Changes to the draft schema:
 - All in the browser, no server cost: a hidden 3D stage renders the character, `lib/video.ts` draws each frame with the captions, and `MediaRecorder` records the canvas. MP4 where the browser can (Chrome 126+, Edge, Safari), WebM otherwise. Download, or Share on phones.
 - Clips are silent (browsers cannot record their own speech voice) and capped at 40 seconds; longer answers are cut at a sentence.
 - The engine got three stage options for this: `pixelRatio`, `pauseOffscreen` and `trackPointer`, plus an `onFrame` callback that runs right after each render.
+
+## Update: agent levels and rare items
+
+- **XP.** An agent gets 1 point per other wallet per day that runs it (a Redis key per agent, runner and UTC day stops one wallet from farming), and 3 per battle win (next update). Stored as `Agent.xp` (migration `20261005090000_levels`). Levels: 0, 5, 15, 40, 100, 250 points for levels 1 to 6 (`packages/shared/src/levels.ts`).
+- **Rare items.** Sparkle aura (level 2), Gold wings (3), Crown (4), Galaxy ring (5), and a Diamond halo for token holders (shown locked until the token address is set). They are new values of the existing `hat` and `back` fields, so `CharacterConfig` keeps the same keys; the base characters and `CHIPS` are unchanged.
+- **Enforced by the API.** Creating or saving a look with a locked item returns 403 `locked` with a readable message. The studio shows locked items with a lock and the level they need, and "Item locked" in the save label if it ever happens.
+- **Studio.** A "Rare items" section in the Gear tab with a level bar and the next unlock, a level badge in the studio bar, and a level-up celebration (toast, cheer, confetti) the first time the creator sees a higher level. Discover cards and share pages show the level.
+- **Engine.** New geometry for the five items in `builder.ts`; the aura twinkles and the galaxy ring spins in `actor.ts`.

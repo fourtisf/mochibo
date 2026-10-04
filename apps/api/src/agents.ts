@@ -14,8 +14,12 @@ import {
   PublishSchema,
   RatingSchema,
   SKILLS,
+  levelFor,
+  lockMessage,
+  lockedItem,
   normalizeCharacter,
   type CharacterConfig,
+  type TierId,
   type OwnAgent,
   type PublicAgent,
   type SkillId,
@@ -63,6 +67,8 @@ export function ownView(a: Agent): OwnAgent {
     earned: toCr(a.earnedTotal),
     rating: rating(a),
     ratingCount: a.ratingCount,
+    xp: a.xp,
+    level: levelFor(a.xp).level,
   };
 }
 
@@ -98,6 +104,13 @@ export function agentRoutes(app: FastifyInstance, env: Env, store: Store, db: Pr
     return { user, agent };
   }
   const bad = (reply: FastifyReply, message: string) => reply.code(400).send({ error: "invalid", message });
+  /** Rare items need the agent's level (or a holder tier). Sends 403 and returns false when one is locked. */
+  const itemsAllowed = (reply: FastifyReply, cfg: CharacterConfig, xp: number, tier: TierId) => {
+    const item = lockedItem(cfg, levelFor(xp).level, tier);
+    if (!item) return true;
+    reply.code(403).send({ error: "locked", message: lockMessage(item), item: item.id });
+    return false;
+  };
   const noStore = (reply: FastifyReply) => reply.header("Cache-Control", "no-store");
 
   app.get("/agents/mine", async (req, reply) => {
@@ -118,6 +131,7 @@ export function agentRoutes(app: FastifyInstance, env: Env, store: Store, db: Pr
       return bad(reply, `You can keep up to ${MAX_AGENTS} agents. Delete one to make room.`);
     }
     const d = body.data;
+    if (!itemsAllowed(reply, d.character, 0, user.tier)) return;
     const agent = await db.agent.create({
       data: {
         slug: slugify(d.name),
@@ -147,7 +161,10 @@ export function agentRoutes(app: FastifyInstance, env: Env, store: Store, db: Pr
     if (d.instructions !== undefined) data.instructions = d.instructions;
     if (d.tone !== undefined) data.tone = TONE_TO_DB[d.tone];
     if (d.skills !== undefined) data.skills = d.skills;
-    if (d.character !== undefined) data.character = d.character;
+    if (d.character !== undefined) {
+      if (!itemsAllowed(reply, d.character, found.agent.xp, found.user.tier)) return;
+      data.character = d.character;
+    }
     if (d.baseId !== undefined) data.baseId = d.baseId;
     // A published agent needs at least one skill to stay runnable.
     if (found.agent.published && d.skills && d.skills.length === 0) return bad(reply, "A published agent needs at least one skill.");
