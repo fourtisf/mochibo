@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { SKILL_BY_ID, type Language, type SkillId } from "@orbis/shared";
+import { SKILL_BY_ID, type Language, type SkillId, type Tone } from "@orbis/shared";
 import { CloseIcon } from "@/lib/icons";
 import { useRun } from "@/lib/preview/run";
 import { Portrait } from "./Portrait";
@@ -16,6 +16,9 @@ export interface RunTarget {
   thumb: string;
   glow: string;
   lang: Language;
+  tone: Tone;
+  /** Sent to our API with the run, never shown to other people. */
+  instructions: string;
 }
 
 export function RunModal({ target, onClose }: { target: RunTarget | null; onClose: () => void }) {
@@ -75,7 +78,7 @@ export function RunModal({ target, onClose }: { target: RunTarget | null; onClos
             <button
               className="btn btn-primary btn-block"
               disabled={busy}
-              onClick={() => run({ skillId: skill, task, persona: { name: target.name, lang: target.lang }, cost: target.price, label: target.name })}
+              onClick={() => run({ skillId: skill, task, persona: { name: target.name, instructions: target.instructions, tone: target.tone, lang: target.lang, skills: target.skills }, cost: target.price, label: target.name })}
             >
               {busy ? "Working…" : target.price ? `Run for ${target.price} CR` : "Run for free"}
             </button>

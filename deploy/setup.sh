@@ -4,8 +4,9 @@
 #
 #   EMAIL=you@example.com bash /home/mochibo/app/deploy/setup.sh
 #
-# Safe to run again. Installs Node, pnpm, PM2, Nginx and certbot, builds the app, starts it
-# with PM2 (restarts on reboot), configures Nginx and gets a Let's Encrypt certificate.
+# Safe to run again. Installs Node, pnpm, PM2, Nginx, certbot and Redis, builds the web app and
+# the API, starts both with PM2 (restarts on reboot), configures Nginx and gets a Let's Encrypt
+# certificate.
 set -euo pipefail
 
 DOMAIN="${DOMAIN:-mochibo.studio}"
@@ -52,7 +53,7 @@ wait_for_apt
 # Third-party sources added by other apps can fail (for example, an expired signing key).
 # The Ubuntu sources are what we need, so a partial failure is not fatal.
 $APT update -y || echo "    Some package sources failed to update (see above). Continuing with the current package lists."
-$APT install -y nginx certbot python3-certbot-nginx git curl ca-certificates ufw xz-utils
+$APT install -y nginx certbot python3-certbot-nginx git curl ca-certificates ufw xz-utils redis-server openssl
 
 echo "==> Node.js $NODE_MAJOR (private copy in $NODE_DIR)"
 if ! "$NODE_DIR/bin/node" -v 2>/dev/null | grep -q "^v$NODE_MAJOR\."; then
@@ -101,6 +102,9 @@ sudo -u "$APP_USER" -H env PATH="$PATH" bash -c "
   pnpm install --frozen-lockfile
   pnpm build
 "
+
+echo "==> API: private Redis, settings file, port and the /api route"
+DOMAIN="$DOMAIN" APP_USER="$APP_USER" bash "$APP_DIR/deploy/api-setup.sh"
 
 echo "==> Start with PM2"
 sudo -u "$APP_USER" -H env PATH="$PATH" bash -c "cd '$APP_DIR' && pm2 startOrReload deploy/ecosystem.config.cjs && pm2 save"

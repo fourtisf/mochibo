@@ -163,7 +163,7 @@ function Console() {
     run({
       skillId: skill,
       task,
-      persona: { name: agent.name, lang: agent.lang },
+      persona: { name: agent.name, instructions: agent.instructions, tone: agent.tone, lang: agent.lang, skills: agent.skills },
       cost: ECONOMICS.runCostCr,
       stage: stages.get("studio"),
     });

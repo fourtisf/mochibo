@@ -1,7 +1,7 @@
 "use client";
 /**
  * PREVIEW STATE (phase 1).
- * Credits, the ledger and the studio agent live in browser memory here (the wallet is real, see components/wallet), exactly
+ * Credits, the ledger and the studio agent live in browser memory here (the wallet, sign-in and AI runs are real), exactly
  * like the prototype, minus its fake incoming runs after publishing. Phase 2 swaps this for SIWE + the agents API (autosave via PATCH),
  * phase 3 for the real ledger. Components only talk to the hooks below, so the swap stays
  * inside this file.
@@ -55,6 +55,8 @@ interface PreviewStore {
   addCredits(amount: number): void;
   /** Debit a run. Returns false (and changes nothing) when the balance is too low. */
   spend(cost: number, ledgerText: string): boolean;
+  /** Give a debited run back (failed runs are refunded in full). */
+  refund(amount: number, ledgerText: string): void;
   addLedger(text: string, amt: number): void;
   setPublished(published: boolean, thumb?: string): void;
 }
@@ -145,6 +147,16 @@ export function PreviewStoreProvider({ children }: { children: ReactNode }) {
     [addLedger],
   );
 
+  const refund = useCallback(
+    (amount: number, text: string) => {
+      if (!amount) return;
+      creditsRef.current += amount;
+      setCredits((c) => c + amount);
+      addLedger(text, amount);
+    },
+    [addLedger],
+  );
+
   const setPublished = useCallback(
     (published: boolean, thumb?: string) => {
       setAgent((a) => ({ ...a, published, thumb: thumb ?? a.thumb }));
@@ -156,8 +168,8 @@ export function PreviewStoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => () => clearTimeout(saveTimer.current), []);
 
   const value = useMemo<PreviewStore>(
-    () => ({ credits, ledger, agent, saveState, updateAgent, setCfg, replaceCfg, addCredits, spend, addLedger, setPublished }),
-    [credits, ledger, agent, saveState, updateAgent, setCfg, replaceCfg, addCredits, spend, addLedger, setPublished],
+    () => ({ credits, ledger, agent, saveState, updateAgent, setCfg, replaceCfg, addCredits, spend, refund, addLedger, setPublished }),
+    [credits, ledger, agent, saveState, updateAgent, setCfg, replaceCfg, addCredits, spend, refund, addLedger, setPublished],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

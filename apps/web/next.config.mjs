@@ -26,6 +26,11 @@ const nextConfig = {
     config.externals.push("pino-pretty", "lokijs", "encoding");
     return config;
   },
+  // In development the API runs on its own port. In production Nginx sends /api to the API
+  // before requests reach Next.js, so this rewrite is only a fallback.
+  async rewrites() {
+    return [{ source: "/api/:path*", destination: `${process.env.API_INTERNAL_URL || "http://127.0.0.1:4000"}/:path*` }];
+  },
   async headers() {
     return [
       { source: "/embed/:path*", headers: frameAll },

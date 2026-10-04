@@ -126,3 +126,61 @@ Everything below is isolated so the swap stays local.
 - **Webpack.** `next.config.mjs` maps optional x402 peers of the Coinbase SDK to empty modules (a known wagmi 2 build issue).
 - **Not done yet.** Sign-In with Ethereum (nonce, signature, session cookie) needs the Fastify API, which is the next phase 2 step. The preview mock wallet was removed.
 - **VPS settings.** Public settings go in `/home/mochibo/mochibo.env` (see `deploy/README.md`) and are baked in at build time.
+
+## Update: live AI answers (OpenRouter) and wallet sign-in
+
+**Owner decisions (October 4, 2026)**
+- The AI provider is OpenRouter instead of the Anthropic API from the brief.
+- Only wallets that are connected and signed in can run agents.
+
+**API (`apps/api`)**
+
+Fastify 5 on Node 22, bundled to `dist/server.cjs` with esbuild.
+- **Sign in.** `GET /auth/nonce`, `POST /auth/verify` and `POST /auth/logout`.
+  - Sign-In with Ethereum, using viem's SIWE helpers.
+  - Each nonce lives 5 minutes in Redis and can be used once.
+  - Verify checks the domain, the chain id (when `CHAIN_ID` is set) and the expiry.
+  - The session cookie is a random id stored in Redis. It is httpOnly, SameSite=Lax, Secure on HTTPS, and lasts 7 days.
+- **`GET /me`** returns the signed-in address. **`GET /runs/status`** returns the daily usage.
+- **`POST /runs`** streams the answer as Server-Sent Events.
+  - The prompt is built like `liveRun()` in the prototype: the persona goes in the system prompt, the task in the user turn.
+  - When web search is off, the Web research skill is told it cannot browse, and the UI says so.
+- **Limits** live in Redis:
+  - per minute, per wallet per UTC day, and in total per day
+  - one run at a time per wallet
+- **Failed runs** do not count towards the daily limit. In the browser, the preview credits are refunded.
+- **CSRF.** Every write must carry `Origin` equal to `APP_URL`.
+- **Logs** keep the wallet, skill, model, token counts and duration. They never include the task, the instructions or the answer.
+- **Tests.** 12 tests in `src/app.test.ts`:
+  - SIWE happy path, replayed nonce, wrong domain, wrong signer, missing Origin, chain id
+  - streaming, validation, daily and total caps, provider failure, offline mode
+
+**Web**
+- `components/wallet/WalletButton.tsx` adds RainbowKit's authentication adapter. After connecting, the modal asks for one free signature.
+  - Disconnecting or switching accounts ends the session.
+  - `lib/auth.ts` shares the sign-in state with the rest of the page, so a Run click while signed out opens the wallet modal.
+- `lib/preview/run.ts` streams `/api/runs` into the output. The character thinks, scans, talks while the text arrives, and cheers at the end.
+  - Preview credits are debited only after the API accepts the run.
+  - The canned sample answers (`sample.ts`) were removed.
+- In development, Next rewrites `/api/*` to the API (`API_INTERNAL_URL`, default `http://127.0.0.1:4000`). In production, Nginx handles `/api/`.
+
+**Deploy**
+- `deploy/api-setup.sh` (run by `setup.sh` and `update.sh`):
+  - creates a private Redis instance `redis-server@mochibo`
+  - creates `/home/mochibo/api.env` (mode 600) and picks the API port
+  - writes the Nginx snippet `/etc/nginx/snippets/mochibo-api.conf` with buffering off for streaming, and includes it in the site
+- `update.sh` now pulls and re-executes its newest version, like `setup.sh`.
+
+**Verified**
+- `pnpm check` passes.
+- In Chromium, with a test wallet that really signs and a fake OpenRouter:
+  - a signed-out Run opens the modal
+  - sign-in sets the cookie and the answer streams in
+  - the 4th run of 3 allowed shows the daily-limit message and is not charged
+  - the session survives a reload, and disconnect ends it
+- Through a local Nginx with the generated snippet, the first streamed chunk arrived after 6 ms (not buffered).
+
+**Open**
+- The OpenRouter key and model are set by the owner in `/home/mochibo/api.env` (see `deploy/README.md`).
+- OpenRouter could not be reached from the build sandbox, so the first real call happens on the VPS.
+- Discover example agents use their description as instructions until real agents are stored (next phase 2 step: Postgres, agent CRUD and `{ agentId }` runs).

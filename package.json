@@ -7,7 +7,8 @@
   },
   "scripts": {
     "dev": "pnpm --filter @orbis/web dev",
-    "build": "pnpm --filter @orbis/web build",
+    "dev:api": "pnpm --filter @orbis/api build && node --env-file-if-exists=apps/api/.env apps/api/dist/server.cjs",
+    "build": "pnpm --filter @orbis/web --filter @orbis/api build",
     "start": "pnpm --filter @orbis/web start",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",

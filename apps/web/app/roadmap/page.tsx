@@ -9,17 +9,17 @@ const STEPS = [
   {
     state: "Live",
     title: "Preview",
-    items: ["The 3D studio with 12 characters, full styling, gear and a floating buddy", "Instructions, tone, language and up to 4 of 8 skills", "Powers, motions and the run flow with labelled sample answers"],
+    items: ["The 3D studio with 12 characters, full styling, gear and a floating buddy", "Instructions, tone, language and up to 4 of 8 skills", "Powers, motions and the run flow", "Sign in with your wallet and get live AI answers, with a daily run limit"],
   },
   {
     state: "Next",
     title: "Accounts and agents",
-    items: ["Sign in with your wallet on Robinhood Chain", "Agents saved to your account with autosave", "Publish to Discover, share links and website embeds"],
+    items: ["Agents saved to your account with autosave", "Publish to Discover, share links and website embeds"],
   },
   {
     state: "Then",
     title: "Real runs and credits",
-    items: ["Live AI answers streamed to the studio", "A credits ledger: runners pay, creators earn, failed runs are refunded", "Ratings, the weekly creator leaderboard and real stats on the home page"],
+    items: ["A credits ledger: runners pay, creators earn, failed runs are refunded", "Ratings, the weekly creator leaderboard and real stats on the home page"],
   },
   {
     state: "Then",

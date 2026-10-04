@@ -33,3 +33,27 @@ export const AgentDraftSchema = z
 export type AgentDraft = z.infer<typeof AgentDraftSchema>;
 
 export const TaskSchema = z.string().trim().min(1).max(LIMITS.taskMax);
+
+/**
+ * POST /runs body during the preview. Agents are not saved on the server yet, so the studio sends
+ * the persona with the run (the owner's own instructions, sent only to our API). When agents are
+ * stored (phase 2), this becomes { agentId, skillId, task } and the server loads the persona.
+ */
+export const PreviewRunSchema = z
+  .object({
+    agent: z
+      .object({
+        name: AgentNameSchema,
+        instructions: InstructionsSchema,
+        tone: z.enum(TONES),
+        lang: z.enum(LANGUAGES),
+        skills: SkillListSchema.refine((a) => a.length > 0, "Equip at least one skill"),
+      })
+      .strict(),
+    skillId: z.enum(SKILL_IDS),
+    task: TaskSchema,
+  })
+  .strict()
+  .refine((r) => r.agent.skills.includes(r.skillId), { message: "That skill is not equipped", path: ["skillId"] });
+
+export type PreviewRun = z.infer<typeof PreviewRunSchema>;
