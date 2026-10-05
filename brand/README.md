@@ -15,6 +15,7 @@
 | `mochibo-ad.mp4` | 30 s promo video, 1920x1080, 30 fps, with music. Rendered from the site's own 3D engine. The publish scene shows an example price with a fee note. |
 | `mochibo-update-ad.mp4` | 35 s promo for the new features, 1920x1080, 30 fps, with music: talk to your agent, Agent Battle, levels and rare items, answers as video. Rendered from the site's own 3D engine. Battle lines and vote numbers are illustrative. |
 | `mochibo-autopilot-ad.mp4` | 30 s promo for Autopilot, 1920x1080, 30 fps, with music: set a task and a time, the agent runs overnight, results wait in the inbox. Rendered from the site's own 3D engine. Result texts are illustrative. |
+| `mochibo-mochi-launch.mp4` | 38 s token launch video, 1920x1080, 30 fps, with music: "$MOCHI is live", then a recap of every live feature. Shows no contract address and no chain ("CA only on @mochibostudio"), ends with a not-financial-advice line. Battle lines and votes are illustrative. |
 
 Website copies live in `apps/web/public/brand/` (nav logo) and `apps/web/app/` (favicon, Apple icon, link preview image).
 
