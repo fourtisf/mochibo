@@ -4,6 +4,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { createSiweMessage } from "viem/siwe";
 import { systemPrompt } from "./ai";
 import { battlePrompt, cleanLine, perspective, settleDue } from "./battles";
+import { runDueAutopilots } from "./autopilots";
 import { buildApp } from "./app";
 import { loadEnv } from "./env";
 import { reconcile } from "./ledger";
@@ -22,7 +23,7 @@ if (!DB_URL)
 beforeEach(async () => {
   if (DB_URL)
     await db.$executeRawUnsafe(
-      'TRUNCATE "BattleVote", "Battle", "Rating", "LedgerEntry", "Run", "Claim", "Deposit", "Agent", "User" CASCADE',
+      'TRUNCATE "AutopilotResult", "Autopilot", "BattleVote", "Battle", "Rating", "LedgerEntry", "Run", "Claim", "Deposit", "Agent", "User" CASCADE',
     );
 });
 afterAll(async () => {
@@ -1253,3 +1254,78 @@ describe.skipIf(!DB_URL)("battles", () => {
     ).toContain("AGAINST");
   });
 });
+
+describe.skipIf(!DB_URL)("autopilot", () => {
+  const quiet = { warn: () => undefined };
+  const later = (h: number) => new Date(Date.now() + h * 3600_000);
+
+  async function setupWithAgent(fetchImpl: typeof fetch = fakeProvider(["Three ", "ideas."])) {
+    const s = setup({}, fetchImpl);
+    apps.push(s.app);
+    const { cookie, agent } = await creatorWithAgent(s.app, false);
+    const h = { origin: ORIGIN, cookie };
+    const created = await s.app.inject({ method: "POST", url: "/autopilots", headers: h, payload: { target: { kind: "agent", id: agent.id }, skillId: "writer", task: "Write 3 tweet ideas", every: "daily", minute: 9 * 60 } });
+    return { ...s, cookie, h, agent, created };
+  }
+
+  it("runs on schedule, once, pays like a run and puts the answer in the inbox", async () => {
+    const { app, env, store, cookie, h, created } = await setupWithAgent();
+    expect(created.statusCode).toBe(201);
+    expect(created.json()).toMatchObject({ autopilot: { every: "daily", minute: 540, enabled: true, name: "Thread Bot" }, cost: 5 });
+    expect(new Date(created.json().autopilot.nextRunAt).getTime()).toBeGreaterThan(Date.now());
+    // Nothing is due yet.
+    expect(await runDueAutopilots(db, env, store, fakeProvider(["x"]), quiet)).toBe(0);
+    // A day later it runs, and only once even if the scheduler ticks twice.
+    expect(await runDueAutopilots(db, env, store, fakeProvider(["Three ", "ideas."]), quiet, later(25))).toBe(1);
+    expect(await runDueAutopilots(db, env, store, fakeProvider(["x"]), quiet, later(25))).toBe(0);
+    const inbox = (await app.inject({ method: "GET", url: "/autopilots/results", headers: { cookie } })).json().results;
+    expect(inbox).toHaveLength(1);
+    expect(inbox[0]).toMatchObject({ status: "done", text: "Three ideas.", read: false, name: "Thread Bot" });
+    expect((await app.inject({ method: "GET", url: "/me", headers: { cookie } })).json().balance).toBe(95);
+    expect((await app.inject({ method: "GET", url: "/autopilots", headers: { cookie } })).json()).toMatchObject({ unread: 1, autopilots: [{ lastStatus: "done" }] });
+    await app.inject({ method: "POST", url: "/autopilots/results/read", headers: h });
+    expect((await app.inject({ method: "GET", url: "/autopilots", headers: { cookie } })).json().unread).toBe(0);
+    expect(await reconcile(db)).toEqual([]);
+  });
+
+  it("pauses itself when the credits run out", async () => {
+    const { app, env, store, cookie } = await setupWithAgent();
+    await db.$executeRawUnsafe(`UPDATE "User" SET balance = 300`); // 3 CR, a run costs 5
+    await db.$executeRawUnsafe(`DELETE FROM "LedgerEntry"`); // keep the test about pausing, not the ledger
+    await runDueAutopilots(db, env, store, fakeProvider(["x"]), quiet, later(25));
+    const ap = (await app.inject({ method: "GET", url: "/autopilots", headers: { cookie } })).json().autopilots[0];
+    expect(ap).toMatchObject({ enabled: false, lastStatus: "paused", nextRunAt: null });
+    expect(ap.pausedReason).toContain("Out of credits");
+  });
+
+  it("refunds failed runs and pauses after three in a row", async () => {
+    const { app, env, store, cookie } = await setupWithAgent();
+    for (let i = 1; i <= 3; i++) await runDueAutopilots(db, env, store, fakeProvider([], { status: 500 }), quiet, later(25 * i));
+    const ap = (await app.inject({ method: "GET", url: "/autopilots", headers: { cookie } })).json().autopilots[0];
+    expect(ap).toMatchObject({ enabled: false, lastStatus: "failed" });
+    expect((await app.inject({ method: "GET", url: "/me", headers: { cookie } })).json().balance).toBe(100);
+    const inbox = (await app.inject({ method: "GET", url: "/autopilots/results", headers: { cookie } })).json().results;
+    expect(inbox.map((r: { status: string }) => r.status)).toEqual(["failed", "failed", "failed"]);
+    expect(await reconcile(db)).toEqual([]);
+  });
+
+  it("keeps tasks private, limits run-now, and turns back on from now", async () => {
+    const { app, h, cookie, created } = await setupWithAgent();
+    const id = created.json().autopilot.id;
+    const { cookie: other } = await signIn(app);
+    expect((await app.inject({ method: "GET", url: "/autopilots/results", headers: { cookie: other } })).json().results).toEqual([]);
+    expect((await app.inject({ method: "PATCH", url: `/autopilots/${id}`, headers: { origin: ORIGIN, cookie: other }, payload: { enabled: false } })).statusCode).toBe(404);
+    expect((await app.inject({ method: "POST", url: `/autopilots/${id}/run`, headers: h })).statusCode).toBe(200);
+    expect((await app.inject({ method: "POST", url: `/autopilots/${id}/run`, headers: h })).statusCode).toBe(429);
+    const off = (await app.inject({ method: "PATCH", url: `/autopilots/${id}`, headers: h, payload: { enabled: false } })).json().autopilot;
+    expect(off).toMatchObject({ enabled: false, nextRunAt: null });
+    const weekly = await app.inject({ method: "PATCH", url: `/autopilots/${id}`, headers: h, payload: { enabled: true, every: "weekly" } });
+    expect(weekly.statusCode).toBe(400);
+    const on = (await app.inject({ method: "PATCH", url: `/autopilots/${id}`, headers: h, payload: { enabled: true, every: "weekly", weekday: 5 } })).json().autopilot;
+    expect(on).toMatchObject({ enabled: true, every: "weekly", weekday: 5 });
+    expect(new Date(on.nextRunAt).getUTCDay()).toBe(5);
+    expect((await app.inject({ method: "DELETE", url: `/autopilots/${id}`, headers: h })).statusCode).toBe(200);
+    expect((await app.inject({ method: "GET", url: "/autopilots", headers: { cookie } })).json().autopilots).toEqual([]);
+  });
+});
+

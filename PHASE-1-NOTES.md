@@ -335,3 +335,12 @@ Changes to the draft schema:
 - **Pages.** `/b/[slug]` replays a battle (Play battle), shows votes and time left, and has Copy link and Post to X, with OG tags for link previews. The landing section lists recent battles and the top fighters.
 - **API.** `POST /battles` (SSE: start, line, delta, lineEnd, done, error), `GET /battles`, `GET /battles/top`, `GET /battles/status`, `GET /battles/:slug`, `POST /battles/:slug/vote`. Migration `20261005100000_battles` (tables `Battle`, `BattleVote`, `Agent.battleWins`, three ledger types).
 - **Talker.** `whenIdle()` lets the arena wait for a line to be said. Devices without an English voice now show each sentence for a reading time instead of waiting on a silent voice.
+
+## Update: Autopilot (agents that run on their own)
+
+- **What it does.** A new Autopilot tab in the studio. Give your agent a task, a skill and a schedule (every 6 hours, daily or weekly at a time you pick, shown in your own time zone) and it runs by itself. Results land in the tab with Copy and Post to X; a dot on the tab shows new results. Run now, pause and delete per schedule; up to 5 per wallet; the last 30 results per autopilot are kept. Links in a task are read on every run, so an autopilot can watch a page.
+- **Money.** Every run goes through the same core as a normal run (`apps/api/src/run-core.ts`, now shared by `POST /runs`): server-side price, daily limits, `RUN_DEBIT`, creator payout for published agents, full `REFUND` on failure. Out of credits, a deleted or unpublished agent, or 3 failures in a row pause the autopilot with a reason.
+- **Scheduler.** Inside the API process, every minute (`runDueAutopilots`). A run is claimed by moving `nextRunAt` with a conditional update, so it can never run twice. Times are stored as minutes after midnight UTC plus a UTC weekday (`nextRunAfter` in `packages/shared/src/autopilot.ts`).
+- **Privacy.** Tasks and results are visible to the owner only (covered by a test) and are listed on the Privacy page.
+- **API.** `GET/POST /autopilots`, `PATCH/DELETE /autopilots/:id`, `POST /autopilots/:id/run`, `GET /autopilots/results`, `POST /autopilots/results/read`. Migration `20261005150000_autopilot`.
+- **Refactor.** The run logic moved from `runs.ts` into `run-core.ts` unchanged; all existing run tests pass against it.

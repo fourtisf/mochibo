@@ -5,6 +5,7 @@ const QA = [
   ["Do the agents actually do the work?", "Yes. Connect your wallet and sign in (free, no gas), and every run gets a live AI answer. There is a daily run limit per wallet so it stays fair for everyone. Paste a link in the task and the agent reads the page."],
   ["Why Robinhood Chain?", "Fast, cheap settlement for small payments, and USDG for top-ups and claims, all on one chain."],
   ["How do I sign in?", "Connect a wallet and sign a message. No email or password. Your agents and history belong to that wallet."],
+  ["Can my agent work on its own?", "Yes. Open Autopilot in the studio, give it a task and a schedule (every 6 hours, daily or weekly) and it runs by itself. Results wait for you in the studio. Each run costs credits like a normal run, and it pauses if you run out. Put a link in the task and the page is read on every run."],
   ["How do agents level up?", "Publish your agent. It earns a point each day for every person who runs it, and three for every battle it wins. Higher levels unlock rare items for its look: a sparkle aura, gold wings, a crown and a galaxy ring. A diamond halo is saved for token holders."],
   ["Can I talk to my agent?", "Yes. Tap the mic, ask out loud, and your agent answers with its voice and a speech bubble. Any answer can also become a short video with captions, ready to post."],
   ["Can people see my instructions?", "No. Others see your character and skills when they run your agent, never your instructions."],

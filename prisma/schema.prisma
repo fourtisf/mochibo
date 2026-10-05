@@ -90,6 +90,7 @@ model User {
   ratings       Rating[]
   battles       Battle[]
   battleVotes   BattleVote[]
+  autopilots    Autopilot[]
 }
 
 model Agent {
@@ -265,4 +266,52 @@ model BattleVote {
   createdAt DateTime @default(now())
 
   @@id([battleId, userId])
+}
+
+enum AutopilotEvery {
+  HOURS6
+  DAILY
+  WEEKLY
+}
+
+// An agent that runs a task on a schedule; results go to the owner's inbox. The task and the
+// results are private to the owner, like instructions.
+model Autopilot {
+  id           String            @id @default(cuid())
+  ownerId      String
+  owner        User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  agentId      String? // the owner's agent or a published agent
+  exampleId    String?           @db.VarChar(20)
+  name         String            @db.VarChar(32) // agent name when it was set up, for the inbox
+  skillId      String            @db.VarChar(20)
+  task         String            @db.VarChar(2000)
+  every        AutopilotEvery
+  minute       Int // minutes after midnight UTC
+  weekday      Int? // 0 = Sunday (UTC), weekly only
+  enabled      Boolean           @default(true)
+  pausedReason String?           @db.VarChar(200)
+  failures     Int               @default(0) // failed runs in a row
+  nextRunAt    DateTime?
+  lastRunAt    DateTime?
+  lastStatus   String?           @db.VarChar(10)
+  createdAt    DateTime          @default(now())
+  results      AutopilotResult[]
+
+  @@index([enabled, nextRunAt])
+  @@index([ownerId])
+}
+
+model AutopilotResult {
+  id          String    @id @default(cuid())
+  autopilotId String
+  autopilot   Autopilot @relation(fields: [autopilotId], references: [id], onDelete: Cascade)
+  ownerId     String
+  runId       String?
+  status      String    @db.VarChar(10) // done, failed, skipped, paused
+  text        String    @db.Text // the answer, or why there is none
+  read        Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([ownerId, createdAt])
+  @@index([autopilotId, createdAt])
 }

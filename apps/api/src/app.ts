@@ -8,6 +8,7 @@ import type { Env } from "./env";
 import { toCr } from "./ledger";
 import { runRoutes } from "./runs";
 import { battleRoutes } from "./battles";
+import { autopilotRoutes } from "./autopilots";
 import type { Store } from "./store";
 
 export interface AppDeps {
@@ -71,5 +72,6 @@ export function buildApp({ env, store, db, fetchImpl = fetch, logger = true }: A
   agentRoutes(app, env, store, db);
   runRoutes(app, env, store, db, fetchImpl);
   battleRoutes(app, env, store, db, fetchImpl);
+  autopilotRoutes(app, env, store, db, fetchImpl);
   return app;
 }

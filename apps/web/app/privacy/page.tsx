@@ -32,6 +32,7 @@ export default function Privacy() {
           Talking to your agent with the mic uses your browser&apos;s speech recognition. Mochibo receives only the text. Some browsers, such as Chrome and Edge, send the audio to their own
           speech service to turn it into text. Spoken answers are made by your browser on your device.
         </li>
+        <li>If you set up an Autopilot, we store its task, its schedule and its last 30 results so you can read them. Only you can see them. Deleting the autopilot deletes them.</li>
         <li>We do not use advertising trackers and we do not sell personal data.</li>
       </ul>
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { slugify, sparkPath, shortAddress } from "./format";
 import { MARKET } from "./placeholder";
 import { buildScript, clipLines, pickFormat, wrapText } from "./video";
+import { fromUtc, toUtc } from "./autopilot";
 import { CHARACTER_BY_ID, SKILL_BY_ID } from "@orbis/shared";
 
 describe("format", () => {
@@ -70,5 +71,18 @@ describe("answer video script", () => {
     expect(pickFormat((t) => t.startsWith("video/mp4"))?.ext).toBe("mp4");
     expect(pickFormat((t) => t === "video/webm")).toEqual({ mime: "video/webm", ext: "webm" });
     expect(pickFormat(() => false)).toBeNull();
+  });
+});
+
+describe("autopilot times", () => {
+  it("turns a local time into UTC and back", () => {
+    for (const t of ["00:00", "09:30", "23:45"]) {
+      const daily = toUtc(t, null);
+      expect(fromUtc(daily.minute, null).time).toBe(t);
+      for (const wd of [0, 3, 6]) {
+        const weekly = toUtc(t, wd);
+        expect(fromUtc(weekly.minute, weekly.weekday)).toEqual({ time: t, weekday: wd });
+      }
+    }
   });
 });

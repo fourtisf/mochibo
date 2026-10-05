@@ -93,6 +93,19 @@
   width: 20px;
   height: 20px;
 }
+.rb {
+  position: relative;
+}
+.dot {
+  position: absolute;
+  top: 7px;
+  right: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--aqua);
+  box-shadow: 0 0 8px var(--aqua);
+}
 .rb:hover {
   color: var(--ink);
   background: rgba(255, 255, 255, 0.04);

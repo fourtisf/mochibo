@@ -15,11 +15,13 @@ import { MicButton } from "@/components/MicButton";
 import { authActions, useAuth } from "@/lib/auth";
 import { useToast } from "@/lib/toast";
 import { CharacterPane, GearPane, MindPane, PublishPane, SkillsPane, StylePane } from "./Panes";
+import { AutopilotPane } from "./AutopilotPane";
+import { useAutopilots } from "@/lib/autopilot";
 import s from "./Studio.module.css";
 
 const StudioStage = dynamic(() => import("./StudioStage"), { ssr: false });
 
-type Tab = "char" | "style" | "gear" | "mind" | "skills" | "publish";
+type Tab = "char" | "style" | "gear" | "mind" | "skills" | "auto" | "publish";
 
 const ico = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, "aria-hidden": true } as const;
 const TABS: [Tab, string, JSX.Element][] = [
@@ -28,6 +30,7 @@ const TABS: [Tab, string, JSX.Element][] = [
   ["gear", "Gear", <svg key="i" {...ico} strokeLinejoin="round"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" /></svg>],
   ["mind", "Mind", <svg key="i" {...ico} strokeLinejoin="round"><path d="M4 5h16v11H9l-5 4z" /><path d="M8 10h8" /></svg>],
   ["skills", "Skills", <svg key="i" {...ico} strokeLinejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z" /></svg>],
+  ["auto", "Autopilot", <svg key="i" {...ico} strokeLinecap="round"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l3 2M9 2h6" /></svg>],
   ["publish", "Publish", <svg key="i" {...ico}><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18" /></svg>],
 ];
 
@@ -37,6 +40,7 @@ export function Studio() {
   const stages = useStages();
   const toast = useToast();
   useLevelUp();
+  const { unread } = useAutopilots();
 
   return (
     <section id="studio">
@@ -69,6 +73,7 @@ export function Studio() {
                 <button key={id} className={s.rb} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>
                   {icon}
                   {label}
+                  {id === "auto" && unread > 0 && <i className={s.dot} aria-label={`${unread} new results`} />}
                 </button>
               ))}
             </div>
@@ -87,6 +92,9 @@ export function Studio() {
               </div>
               <div className={s.pane} hidden={tab !== "skills"}>
                 <SkillsPane />
+              </div>
+              <div className={s.pane} hidden={tab !== "auto"}>
+                <AutopilotPane active={tab === "auto"} />
               </div>
               <div className={s.pane} hidden={tab !== "publish"}>
                 <PublishPane active={tab === "publish"} />

@@ -6,3 +6,4 @@ export * from "./agent";
 export * from "./examples";
 export * from "./levels";
 export * from "./battle";
+export * from "./autopilot";
