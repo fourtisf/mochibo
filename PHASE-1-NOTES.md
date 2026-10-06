@@ -67,7 +67,7 @@ Env vars used so far, all optional:
 | Variable | Use |
 | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | Base URL for share and embed links. Defaults to the current origin. |
-| `NEXT_PUBLIC_TOKEN_ADDRESS` | Optional override for the token address shown in the hero and Holders. Empty uses `TOKEN_CONTRACT` in `packages/shared/src/config.ts`. |
+| `NEXT_PUBLIC_TOKEN_ADDRESS` | Shows the token address in Rewards. Empty shows "Coming soon". |
 
 ## Still placeholder (by design, for later phases)
 

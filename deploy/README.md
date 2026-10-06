@@ -53,7 +53,7 @@ Put browser-safe settings in `/home/mochibo/mochibo.env`. Both scripts copy this
 ```bash
 cat > /home/mochibo/mochibo.env <<'ENV'
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=   # free at cloud.reown.com; needed for mobile wallets and QR codes
-NEXT_PUBLIC_TOKEN_ADDRESS=              # optional; the CA defaults to TOKEN_CONTRACT in packages/shared/src/config.ts
+NEXT_PUBLIC_TOKEN_ADDRESS=              # leave empty until the token is live ("CA: Coming soon")
 NEXT_PUBLIC_CHAIN_ID=                   # Robinhood Chain id, from the official docs
 NEXT_PUBLIC_RPC_URL=                    # from the official docs
 NEXT_PUBLIC_EXPLORER_URL=               # optional
