@@ -46,7 +46,7 @@ export default function Terms() {
       <h2>Wallets and tokens</h2>
       <p>
         You are responsible for your wallet, its keys and the transactions you sign. Blockchain transactions cannot be reversed. A token has not launched yet; the
-        only official contract address will be posted on this site and on our X account.
+        only official contract address is the one posted on our X account.
       </p>
 
       <h2>Changes and contact</h2>
