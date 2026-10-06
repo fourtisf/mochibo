@@ -1,9 +1,5 @@
 "use client";
 import { TIERS, TOKEN_SYMBOL, formatBps } from "@orbis/shared";
-import { PUBLIC_ENV } from "@/lib/env";
-import { shortAddress } from "@/lib/format";
-import { copyText } from "@/lib/hooks";
-import { useToast } from "@/lib/toast";
 import s from "./Rewards.module.css";
 
 /**
@@ -11,8 +7,6 @@ import s from "./Rewards.module.css";
  * they ship only after the owner confirms the asset, the rate and the legal setup.
  */
 export function Rewards() {
-  const toast = useToast();
-  const ca = PUBLIC_ENV.tokenAddress;
   const best = TIERS[TIERS.length - 1];
 
   return (
@@ -31,19 +25,6 @@ export function Rewards() {
                 <b>{formatBps(t.feeBps)} fee</b>
               </div>
             ))}
-          </div>
-          <div className={s.ca}>
-            Token address <code>{ca ? shortAddress(ca) : "Coming soon"}</code>
-            <button
-              className="btn btn-glass btn-xs"
-              onClick={async () => {
-                if (!ca) return toast("Contract address coming soon");
-                await copyText(ca);
-                toast("Copied");
-              }}
-            >
-              Copy
-            </button>
           </div>
           <p className={`note ${s.fineNote}`}>
             Holder rewards are planned for later. They will only launch once the details and the legal setup are confirmed, and we will announce them on X first.

@@ -107,7 +107,7 @@ Everything below is isolated so the swap stays local.
   - The fake incoming runs after publishing were removed.
 - **No unbuilt promises.**
   - The hero pill now says "Preview is live".
-  - Holders shows fee tiers and the CA ("Coming soon" until `NEXT_PUBLIC_TOKEN_ADDRESS` is set). The hourly stock rewards calculator was removed.
+  - Holders shows fee tiers. The CA is not shown on the site (removed at the owner's request). The hourly stock rewards calculator was removed.
   - The FAQ no longer mentions stock rewards.
 - **Links.**
   - X goes to `SOCIAL.x` (nav, footer, FAQ).
