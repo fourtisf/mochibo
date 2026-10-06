@@ -1,7 +1,9 @@
+import { TOKEN_CONTRACT } from "@orbis/shared";
+
 /** Public (browser-safe) env. Never put secrets in NEXT_PUBLIC_* vars. */
 export const PUBLIC_ENV = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL || "",
-  tokenAddress: process.env.NEXT_PUBLIC_TOKEN_ADDRESS || "",
+  tokenAddress: process.env.NEXT_PUBLIC_TOKEN_ADDRESS || TOKEN_CONTRACT,
 } as const;
 
 /** Base URL for share and embed links. Falls back to the current origin in the browser. */

@@ -9,6 +9,8 @@ export const APP_NAME = "Mochibo";
 export const APP_DISPLAY_HOST = "mochibo.studio";
 /** Holder token symbol shown in Rewards. The final ticker is not decided yet. */
 export const TOKEN_SYMBOL = "MOCHIBO";
+/** Token contract address, given by the owner. Shown on the site; NEXT_PUBLIC_TOKEN_ADDRESS overrides it. */
+export const TOKEN_CONTRACT = "0xC8C1e534eF036952276bb3870b56237FF83Cd86c";
 
 /** Official social links. Empty means not live yet. */
 export const SOCIAL = {
